@@ -2,36 +2,27 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#050816">
 
   <title>SCIENCE MISSION V3 | อ.พี่นัท</title>
 
-  <!-- Tailwind CSS -->
+  <!-- ========================================== -->
+  <!-- โหลด Libraries ที่จำเป็นจาก CDN -->
+  <!-- ========================================== -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-  <!-- Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-  <!-- MediaPipe Pose -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-
+  
+  <!-- FontAwesome สำหรับไอคอน Avatar -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <!-- Google Font -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  >
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -45,1084 +36,324 @@
       --panel: rgba(10, 18, 42, 0.74);
     }
 
-    * {
-      box-sizing: border-box;
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%; min-height: 100%; margin: 0; color: white; background: #030712;
+      font-family: "Kanit", sans-serif; overflow-x: hidden;
     }
 
-    html,
-    body {
-      width: 100%;
-      min-height: 100%;
-      margin: 0;
-      color: white;
-      background: #030712;
-      font-family: "Kanit", sans-serif;
-      overflow-x: hidden;
-    }
+    button, input { font-family: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
 
-    button,
-    input {
-      font-family: inherit;
-    }
-
-    button {
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    #spaceCanvas {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
+    /* พื้นหลัง 3D */
+    #spaceCanvas { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
     .space-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
       background:
-        radial-gradient(
-          circle at 15% 20%,
-          rgba(37, 99, 235, 0.22),
-          transparent 30%
-        ),
-        radial-gradient(
-          circle at 85% 30%,
-          rgba(168, 85, 247, 0.2),
-          transparent 35%
-        ),
-        radial-gradient(
-          circle at 50% 100%,
-          rgba(6, 182, 212, 0.15),
-          transparent 38%
-        ),
-        linear-gradient(
-          to bottom,
-          rgba(3, 7, 18, 0.22),
-          rgba(3, 7, 18, 0.9)
-        );
+        radial-gradient(circle at 15% 20%, rgba(37, 99, 235, 0.22), transparent 30%),
+        radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.2), transparent 35%),
+        radial-gradient(circle at 50% 100%, rgba(6, 182, 212, 0.15), transparent 38%),
+        linear-gradient(to bottom, rgba(3, 7, 18, 0.22), rgba(3, 7, 18, 0.9));
     }
 
-    #app {
-      position: relative;
-      z-index: 2;
-      min-height: 100vh;
-    }
+    #app { position: relative; z-index: 2; min-height: 100vh; }
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: flex; }
 
-    .screen {
-      display: none;
-      min-height: 100vh;
-    }
-
-    .screen.active {
-      display: flex;
-    }
-
+    /* Glassmorphism */
     .glass {
-      background: var(--panel);
-      border: 1px solid rgba(103, 232, 249, 0.22);
-      box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      background: var(--panel); border: 1px solid rgba(103, 232, 249, 0.22);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
     }
 
-    .neon-title {
-      text-shadow:
-        0 0 10px rgba(34, 211, 238, 0.8),
-        0 0 26px rgba(59, 130, 246, 0.55),
-        0 0 50px rgba(168, 85, 247, 0.4);
-    }
+    .neon-title { text-shadow: 0 0 10px rgba(34, 211, 238, 0.8), 0 0 26px rgba(59, 130, 246, 0.55), 0 0 50px rgba(168, 85, 247, 0.4); }
 
+    /* Buttons */
     .primary-btn {
-      color: white;
-      border: 1px solid rgba(103, 232, 249, 0.55);
+      color: white; border: 1px solid rgba(103, 232, 249, 0.55);
       background: linear-gradient(135deg, #0891b2, #2563eb, #7c3aed);
-      box-shadow:
-        0 0 20px rgba(34, 211, 238, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      transition: 0.2s ease;
+      box-shadow: 0 0 20px rgba(34, 211, 238, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2); transition: 0.2s ease;
     }
-
-    .primary-btn:hover {
-      transform: translateY(-2px);
-      box-shadow:
-        0 0 30px rgba(34, 211, 238, 0.4),
-        0 12px 35px rgba(0, 0, 0, 0.3);
-    }
-
-    .primary-btn:active {
-      transform: scale(0.98);
-    }
-
-    .primary-btn:disabled {
-      cursor: not-allowed;
-      opacity: 0.55;
-      transform: none;
-    }
+    .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(34, 211, 238, 0.4), 0 12px 35px rgba(0, 0, 0, 0.3); }
+    .primary-btn:active { transform: scale(0.98); }
+    .primary-btn:disabled { cursor: not-allowed; opacity: 0.55; transform: none; }
 
     .secondary-btn {
-      color: #cffafe;
-      background: rgba(8, 145, 178, 0.12);
-      border: 1px solid rgba(34, 211, 238, 0.3);
-      transition: 0.2s ease;
+      color: #cffafe; background: rgba(8, 145, 178, 0.12); border: 1px solid rgba(34, 211, 238, 0.3); transition: 0.2s ease;
     }
-
-    .secondary-btn:hover {
-      background: rgba(8, 145, 178, 0.24);
-    }
+    .secondary-btn:hover { background: rgba(8, 145, 178, 0.24); }
 
     .form-input {
-      width: 100%;
-      color: white;
-      background: rgba(2, 6, 23, 0.72);
-      border: 1px solid rgba(103, 232, 249, 0.26);
-      outline: none;
-      transition: 0.2s ease;
+      width: 100%; color: white; background: rgba(2, 6, 23, 0.72);
+      border: 1px solid rgba(103, 232, 249, 0.26); outline: none; transition: 0.2s ease;
     }
+    .form-input:focus { border-color: var(--cyan); box-shadow: 0 0 18px rgba(34, 211, 238, 0.2); }
 
-    .form-input:focus {
-      border-color: var(--cyan);
-      box-shadow: 0 0 18px rgba(34, 211, 238, 0.2);
-    }
+    .hud-chip { background: rgba(2, 6, 23, 0.74); border: 1px solid rgba(148, 163, 184, 0.2); backdrop-filter: blur(12px); }
 
-    .hud-chip {
-      background: rgba(2, 6, 23, 0.74);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      backdrop-filter: blur(12px);
-    }
-
-    /* Creator */
-    .creator-logo-wrapper {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 12px;
-    }
-
+    /* Creator Logo */
+    .creator-logo-wrapper { position: relative; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; }
     .creator-logo-wrapper::before {
-      content: "";
-      position: absolute;
-      inset: -8px;
-      border-radius: 50%;
-      background: conic-gradient(
-        from 0deg,
-        #22d3ee,
-        #3b82f6,
-        #a855f7,
-        #ec4899,
-        #22d3ee
-      );
-      filter: blur(7px);
-      opacity: 0.75;
-      animation: logoGlow 4s linear infinite;
+      content: ""; position: absolute; inset: -8px; border-radius: 50%;
+      background: conic-gradient(from 0deg, #22d3ee, #3b82f6, #a855f7, #ec4899, #22d3ee);
+      filter: blur(7px); opacity: 0.75; animation: logoGlow 4s linear infinite;
     }
-
     .creator-logo {
-      position: relative;
-      z-index: 1;
-      width: 96px;
-      height: 96px;
-      padding: 7px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 2px solid rgba(207, 250, 254, 0.9);
-      background: rgba(255, 255, 255, 0.96);
-      box-shadow:
-        0 0 20px rgba(34, 211, 238, 0.6),
-        0 0 45px rgba(168, 85, 247, 0.3);
+      position: relative; z-index: 1; width: 96px; height: 96px; padding: 7px;
+      object-fit: cover; border-radius: 50%; border: 2px solid rgba(207, 250, 254, 0.9);
+      background: rgba(255, 255, 255, 0.96); box-shadow: 0 0 20px rgba(34, 211, 238, 0.6), 0 0 45px rgba(168, 85, 247, 0.3);
       animation: logoFloat 3s ease-in-out infinite;
     }
-
     .creator-credit {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 4px;
-      padding: 7px 17px;
-      color: #cffafe;
-      border: 1px solid rgba(103, 232, 249, 0.3);
-      border-radius: 999px;
-      background: rgba(8, 145, 178, 0.13);
-      box-shadow: 0 0 18px rgba(34, 211, 238, 0.14);
+      display: inline-flex; align-items: center; justify-content: center; margin-top: 4px; padding: 7px 17px;
+      color: #cffafe; border: 1px solid rgba(103, 232, 249, 0.3); border-radius: 999px; background: rgba(8, 145, 178, 0.13); box-shadow: 0 0 18px rgba(34, 211, 238, 0.14);
     }
-
     .creator-mini-logo {
-      width: 38px;
-      height: 38px;
-      padding: 3px;
-      object-fit: cover;
-      border-radius: 50%;
-      background: white;
-      border: 1px solid rgba(103, 232, 249, 0.7);
-      box-shadow: 0 0 14px rgba(34, 211, 238, 0.35);
+      width: 38px; height: 38px; padding: 3px; object-fit: cover; border-radius: 50%;
+      background: white; border: 1px solid rgba(103, 232, 249, 0.7); box-shadow: 0 0 14px rgba(34, 211, 238, 0.35);
     }
 
-    @keyframes logoFloat {
-      0%,
-      100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-6px);
-      }
-    }
-
-    @keyframes logoGlow {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+    @keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes logoGlow { to { transform: rotate(360deg); } }
 
     /* Timer */
-    #timerRing {
-      --progress: 100%;
-      background: conic-gradient(
-        var(--cyan) var(--progress),
-        rgba(51, 65, 85, 0.55) 0
-      );
-    }
+    #timerRing { --progress: 100%; background: conic-gradient(var(--cyan) var(--progress), rgba(51, 65, 85, 0.55) 0); }
+    #timerRing::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: #071020; }
+    #timerText { position: relative; z-index: 1; }
 
-    #timerRing::before {
-      content: "";
-      position: absolute;
-      inset: 5px;
-      border-radius: 50%;
-      background: #071020;
-    }
+    /* Choices Area */
+    #questionCard { animation: cardEnter 0.42s ease; }
+    @keyframes cardEnter { from { opacity: 0; transform: translateY(-12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-    #timerText {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Question */
-    #questionCard {
-      animation: cardEnter 0.42s ease;
-    }
-
-    @keyframes cardEnter {
-      from {
-        opacity: 0;
-        transform: translateY(-12px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .answers-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-
+    .answers-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
     .answer-card {
-      position: relative;
-      min-height: 155px;
-      overflow: hidden;
-      color: white;
-      background: rgba(8, 15, 36, 0.86);
-      border: 2px solid rgba(148, 163, 184, 0.25);
-      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.25);
-      transition:
-        transform 0.18s ease,
-        border-color 0.18s ease,
-        box-shadow 0.18s ease;
+      position: relative; min-height: 155px; overflow: hidden; color: white;
+      background: rgba(8, 15, 36, 0.86); border: 2px solid rgba(148, 163, 184, 0.25);
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.25); transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
     }
-
-    .answer-card::after {
-      content: "";
-      position: absolute;
-      inset: auto 0 0;
-      height: 5px;
-      background: var(--zone-color);
-      box-shadow: 0 0 20px var(--zone-color);
+    .answer-card::after { content: ""; position: absolute; inset: auto 0 0; height: 5px; background: var(--zone-color); box-shadow: 0 0 20px var(--zone-color); }
+    
+    .answer-card:hover, .answer-card.zone-active {
+      transform: translateY(-5px); border-color: var(--zone-color);
+      box-shadow: 0 0 28px rgba(34, 211, 238, 0.25), 0 18px 38px rgba(0, 0, 0, 0.32);
     }
-
-    .answer-card:hover,
-    .answer-card.zone-active {
-      transform: translateY(-5px);
-      border-color: var(--zone-color);
-      box-shadow:
-        0 0 28px rgba(34, 211, 238, 0.25),
-        0 18px 38px rgba(0, 0, 0, 0.32);
-    }
-
-    .answer-card.correct {
-      border-color: var(--green);
-      background: rgba(20, 83, 45, 0.78);
-      box-shadow: 0 0 32px rgba(34, 197, 94, 0.55);
-    }
-
-    .answer-card.wrong {
-      border-color: var(--red);
-      background: rgba(127, 29, 29, 0.78);
-      box-shadow: 0 0 32px rgba(239, 68, 68, 0.5);
-    }
-
-    .answer-card:disabled {
-      cursor: not-allowed;
-    }
+    .answer-card.correct { border-color: var(--green); background: rgba(20, 83, 45, 0.78); box-shadow: 0 0 32px rgba(34, 197, 94, 0.55); }
+    .answer-card.wrong { border-color: var(--red); background: rgba(127, 29, 29, 0.78); box-shadow: 0 0 32px rgba(239, 68, 68, 0.5); }
+    .answer-card:disabled { cursor: not-allowed; }
 
     .zone-number {
-      display: flex;
-      width: 38px;
-      height: 38px;
-      flex: 0 0 auto;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      border-radius: 50%;
-      background: var(--zone-color);
-      box-shadow: 0 0 16px var(--zone-color);
-      font-weight: 800;
+      display: flex; width: 38px; height: 38px; flex: 0 0 auto; align-items: center; justify-content: center;
+      color: white; border-radius: 50%; background: var(--zone-color); box-shadow: 0 0 16px var(--zone-color); font-weight: 800;
     }
+    .category-badge { color: #a5f3fc; background: rgba(8, 145, 178, 0.16); border: 1px solid rgba(34, 211, 238, 0.25); }
+    .pose-guide { border: 1px dashed rgba(103, 232, 249, 0.35); background: rgba(6, 182, 212, 0.08); }
 
-    .category-badge {
-      color: #a5f3fc;
-      background: rgba(8, 145, 178, 0.16);
-      border: 1px solid rgba(34, 211, 238, 0.25);
-    }
-
-    .pose-guide {
-      border: 1px dashed rgba(103, 232, 249, 0.35);
-      background: rgba(6, 182, 212, 0.08);
-    }
-
-    /* Player Avatar Track & Jump Flash */
-    #playerAvatarTracker {
-      position: relative;
-      width: 100%;
-      height: 60px;
-      margin-top: 15px;
-    }
-
-    #avatarDoll {
-      position: absolute;
-      bottom: 0;
-      font-size: 45px;
-      transform: translateX(-50%);
-      transition: left 0.15s ease-out, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      filter: drop-shadow(0 0 15px rgba(34, 211, 238, 0.8));
-      z-index: 10;
-    }
-
-    #avatarDoll.jumping {
-      transform: translateX(-50%) scale(1.4) translateY(-25px);
-      filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.9));
+    /* -------------------------------------------
+       Player Avatar (Real-time Indicator)
+       ------------------------------------------- */
+    #player-indicator.jumping {
+      transform: translateX(-50%) translateY(-25px) scale(1.4) !important;
+      background-color: var(--purple) !important;
+      border-color: #d8b4fe !important;
+      box-shadow: 0 0 30px rgba(168, 85, 247, 0.9) !important;
     }
 
     #jumpFlash {
-      position: fixed;
-      inset: 0;
-      background: rgba(168, 85, 247, 0.35);
-      z-index: 90;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.4s ease-out;
+      position: fixed; inset: 0; background: rgba(168, 85, 247, 0.35); z-index: 90;
+      pointer-events: none; opacity: 0; transition: opacity 0.4s ease-out;
     }
+    #jumpFlash.flash { opacity: 1; transition: none; }
 
-    #jumpFlash.flash {
-      opacity: 1;
-      transition: none;
-    }
+    /* Feedback Center Symbol */
+    .feedback-overlay { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; pointer-events: none; background: rgba(2, 6, 23, 0.2); }
+    .feedback-overlay.show { display: flex; }
+    .feedback-symbol { font-size: clamp(6rem, 20vw, 13rem); animation: feedbackPop 0.55s ease; filter: drop-shadow(0 0 35px currentColor); }
+    @keyframes feedbackPop { 0% { opacity: 0; transform: scale(0.4) rotate(-12deg); } 65% { opacity: 1; transform: scale(1.15) rotate(4deg); } 100% { transform: scale(1); } }
 
-    /* Feedback */
-    .feedback-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      background: rgba(2, 6, 23, 0.2);
-    }
-
-    .feedback-overlay.show {
-      display: flex;
-    }
-
-    .feedback-symbol {
-      font-size: clamp(6rem, 20vw, 13rem);
-      animation: feedbackPop 0.55s ease;
-      filter: drop-shadow(0 0 35px currentColor);
-    }
-
-    @keyframes feedbackPop {
-      0% {
-        opacity: 0;
-        transform: scale(0.4) rotate(-12deg);
-      }
-      65% {
-        opacity: 1;
-        transform: scale(1.15) rotate(4deg);
-      }
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    /* Camera */
+    /* Camera Panel */
     #cameraPanel {
-      position: fixed;
-      z-index: 60;
-      right: 18px;
-      bottom: 18px;
-      width: min(310px, 42vw);
-      min-width: 210px;
-      overflow: hidden;
-      border: 1px solid rgba(103, 232, 249, 0.6);
-      border-radius: 18px;
-      background: rgba(2, 6, 23, 0.94);
-      box-shadow:
-        0 0 28px rgba(34, 211, 238, 0.25),
-        0 18px 50px rgba(0, 0, 0, 0.5);
-      touch-action: none;
+      position: fixed; z-index: 60; right: 18px; bottom: 18px; width: min(310px, 42vw); min-width: 210px; overflow: hidden;
+      border: 1px solid rgba(103, 232, 249, 0.6); border-radius: 18px; background: rgba(2, 6, 23, 0.94);
+      box-shadow: 0 0 28px rgba(34, 211, 238, 0.25), 0 18px 50px rgba(0, 0, 0, 0.5); touch-action: none;
     }
-
-    #cameraPanel.hidden-panel {
-      display: none;
-    }
-
-    #cameraHandle {
-      display: flex;
-      min-height: 38px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px 10px;
-      cursor: move;
-      user-select: none;
-      background: linear-gradient(
-        90deg,
-        rgba(8, 145, 178, 0.35),
-        rgba(124, 58, 237, 0.3)
-      );
-    }
-
-    #cameraStage {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 4 / 3;
-      overflow: hidden;
-      background: #020617;
-    }
-
-    #cameraVideo,
-    #poseCanvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
-    }
-
-    #poseCanvas {
-      z-index: 2;
-    }
-
-    #cameraStatus {
-      position: absolute;
-      z-index: 3;
-      left: 8px;
-      bottom: 8px;
-      max-width: calc(100% - 16px);
-      padding: 4px 9px;
-      color: #cffafe;
-      border-radius: 999px;
-      background: rgba(2, 6, 23, 0.78);
-      font-size: 11px;
-    }
-
-    .camera-control {
-      color: white;
-      border: 0;
-      background: transparent;
-      cursor: pointer;
-    }
+    #cameraPanel.hidden-panel { display: none; }
+    #cameraHandle { display: flex; min-height: 38px; align-items: center; justify-content: space-between; padding: 7px 10px; cursor: move; user-select: none; background: linear-gradient(90deg, rgba(8, 145, 178, 0.35), rgba(124, 58, 237, 0.3)); }
+    #cameraStage { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: #020617; }
+    #cameraVideo, #poseCanvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    #poseCanvas { z-index: 2; }
+    #cameraStatus { position: absolute; z-index: 3; left: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: 4px 9px; color: #cffafe; border-radius: 999px; background: rgba(2, 6, 23, 0.78); font-size: 11px; }
+    .camera-control { color: white; border: 0; background: transparent; cursor: pointer; }
 
     /* Dashboard */
-    .dashboard-card {
-      background: rgba(8, 15, 36, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-    }
+    .dashboard-card { background: rgba(8, 15, 36, 0.8); border: 1px solid rgba(148, 163, 184, 0.18); }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th, td { padding: 11px 13px; border-bottom: 1px solid rgba(148, 163, 184, 0.14); text-align: left; }
+    th { color: #67e8f9; background: rgba(8, 145, 178, 0.1); }
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 12px currentColor; }
+    .status-dot.online { background: var(--green); }
+    .status-dot.offline { background: var(--red); }
 
-    .table-wrap {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      white-space: nowrap;
-    }
-
-    th,
-    td {
-      padding: 11px 13px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-      text-align: left;
-    }
-
-    th {
-      color: #67e8f9;
-      background: rgba(8, 145, 178, 0.1);
-    }
-
-    .status-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--yellow);
-      box-shadow: 0 0 12px currentColor;
-    }
-
-    .status-dot.online {
-      background: var(--green);
-    }
-
-    .status-dot.offline {
-      background: var(--red);
-    }
-
-    @media (max-width: 850px) {
-      .answers-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .answer-card {
-        min-height: 92px;
-      }
-
-      #cameraPanel {
-        width: 230px;
-      }
-    }
-
-    @media (max-width: 540px) {
-      .creator-logo {
-        width: 82px;
-        height: 82px;
-      }
-
-      #cameraPanel {
-        right: 8px;
-        bottom: 8px;
-        width: 190px;
-        min-width: 170px;
-      }
-
-      #cameraHandle {
-        min-height: 32px;
-        font-size: 11px;
-      }
-
-      .answer-card {
-        min-height: 82px;
-      }
-    }
+    @media (max-width: 850px) { .answers-grid { grid-template-columns: 1fr; } .answer-card { min-height: 92px; } #cameraPanel { width: 230px; } }
+    @media (max-width: 540px) { .creator-logo { width: 82px; height: 82px; } #cameraPanel { right: 8px; bottom: 8px; width: 190px; min-width: 170px; } #cameraHandle { min-height: 32px; font-size: 11px; } .answer-card { min-height: 82px; } }
   </style>
 </head>
 
 <body>
+  <!-- ฉาก 3D -->
   <canvas id="spaceCanvas"></canvas>
   <div class="space-overlay"></div>
 
   <main id="app">
-    <!-- LOGIN -->
-    <section
-      id="loginScreen"
-      class="screen active items-center justify-center px-4 py-10"
-    >
-      <button
-        id="teacherButton"
-        class="secondary-btn fixed right-4 top-4 z-20 rounded-xl px-4 py-2 text-sm"
-        type="button"
-      >
-        👨‍🏫 ครูผู้สอน
-      </button>
+    <!-- ========================================== -->
+    <!-- LOGIN SCREEN -->
+    <!-- ========================================== -->
+    <section id="loginScreen" class="screen active items-center justify-center px-4 py-10">
+      <button id="teacherButton" class="secondary-btn fixed right-4 top-4 z-20 rounded-xl px-4 py-2 text-sm" type="button">👨‍🏫 ครูผู้สอน</button>
 
       <div class="glass w-full max-w-2xl rounded-3xl p-6 md:p-10">
         <div class="mb-7 text-center">
           <div class="creator-logo-wrapper">
-            <img
-              class="creator-logo"
-              src="https://cdn-icons-png.flaticon.com/512/194/194936.png"
-              alt="โลโก้ อ.พี่นัท"
-              width="96"
-              height="96"
-              loading="eager"
-              referrerpolicy="no-referrer"
-              onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex';"
-            >
-
-            <div
-              id="logoFallback"
-              class="creator-logo"
-              style="
-                display:none;
-                align-items:center;
-                justify-content:center;
-                font-size:48px;
-              "
-            >
-              👨‍🏫
-            </div>
+            <img class="creator-logo" src="https://cdn-icons-png.flaticon.com/512/194/194936.png" alt="โลโก้ อ.พี่นัท" width="96" height="96" loading="eager" referrerpolicy="no-referrer">
           </div>
-
-          <div>
-            <span class="creator-credit">
-              จัดทำโดย&nbsp;<strong>อ.พี่นัท</strong>
-            </span>
-          </div>
-
-          <p class="mb-2 mt-5 tracking-[0.28em] text-cyan-300">
-            SCIENCE MISSION V3
-          </p>
-
-          <h1 class="neon-title text-3xl font-extrabold md:text-5xl">
-            ภารกิจพิชิตโครงงานวิทยาศาสตร์
-          </h1>
-
-          <p class="mt-4 text-slate-300">
-            ตอบคำถามด้วยการเดินสลับซ้าย-กลาง-ขวาเข้าโซน แล้วกระโดด
-          </p>
+          <div><span class="creator-credit">จัดทำโดย&nbsp;<strong>อ.พี่นัท</strong></span></div>
+          <p class="mb-2 mt-5 tracking-[0.28em] text-cyan-300">SCIENCE MISSION V3</p>
+          <h1 class="neon-title text-3xl font-extrabold md:text-5xl">ภารกิจพิชิตโครงงานวิทยาศาสตร์</h1>
+          <p class="mt-4 text-slate-300">ตอบคำถามด้วยการเดินสลับซ้าย-กลาง-ขวาเข้าโซน แล้วกระโดด</p>
         </div>
 
         <form id="loginForm" class="space-y-4">
           <div class="grid gap-4 md:grid-cols-2">
-            <label>
-              <span class="mb-2 block text-sm text-cyan-100">ชื่อ</span>
-              <input
-                id="firstName"
-                class="form-input rounded-xl px-4 py-3"
-                type="text"
-                maxlength="60"
-                autocomplete="given-name"
-                placeholder="กรอกชื่อ"
-                required
-              >
-            </label>
-
-            <label>
-              <span class="mb-2 block text-sm text-cyan-100">นามสกุล</span>
-              <input
-                id="lastName"
-                class="form-input rounded-xl px-4 py-3"
-                type="text"
-                maxlength="60"
-                autocomplete="family-name"
-                placeholder="กรอกนามสกุล"
-                required
-              >
-            </label>
+            <label><span class="mb-2 block text-sm text-cyan-100">ชื่อ</span><input id="firstName" class="form-input rounded-xl px-4 py-3" type="text" required placeholder="กรอกชื่อ"></label>
+            <label><span class="mb-2 block text-sm text-cyan-100">นามสกุล</span><input id="lastName" class="form-input rounded-xl px-4 py-3" type="text" required placeholder="กรอกนามสกุล"></label>
           </div>
-
-          <label class="block">
-            <span class="mb-2 block text-sm text-cyan-100">
-              รหัสนักเรียน (ไม่บังคับ)
-            </span>
-
-            <input
-              id="studentId"
-              class="form-input rounded-xl px-4 py-3"
-              type="text"
-              maxlength="40"
-              placeholder="เช่น 65001"
-            >
-          </label>
+          <label class="block"><span class="mb-2 block text-sm text-cyan-100">รหัสนักเรียน (ไม่บังคับ)</span><input id="studentId" class="form-input rounded-xl px-4 py-3" type="text" placeholder="เช่น 65001"></label>
 
           <div class="pose-guide rounded-2xl p-4 text-sm text-slate-300">
-            <p class="mb-2 font-semibold text-cyan-200">
-              กติกาภารกิจ
-            </p>
-
+            <p class="mb-2 font-semibold text-cyan-200">กติกาภารกิจ</p>
             <ul class="space-y-1">
               <li>• สุ่มข้อสอบ 5 ข้อ จากคลังข้อสอบ 30 ข้อ</li>
               <li>• มีเวลา 25 วินาทีต่อข้อ</li>
-              <li>• พลังงานเริ่มต้น 5 ดวง</li>
-              <li>• ตอบถูกได้ 20 คะแนน</li>
               <li>• เดินเข้าโซน ซ้าย-กลาง-ขวา เพื่อเลือกคำตอบ</li>
               <li>• กระโดด 1 ครั้ง เพื่อยืนยันคำตอบ</li>
             </ul>
           </div>
-
-          <button
-            class="primary-btn w-full rounded-2xl px-6 py-4 text-lg font-bold"
-            type="submit"
-          >
-            🚀 เริ่มภารกิจ
-          </button>
-
-          <button
-            id="instructionsButton"
-            class="secondary-btn w-full rounded-2xl px-6 py-3"
-            type="button"
-          >
-            📷 วิธีเล่นด้วยกล้อง AI
-          </button>
+          <button class="primary-btn w-full rounded-2xl px-6 py-4 text-lg font-bold" type="submit">🚀 เริ่มภารกิจ</button>
+          <button id="instructionsButton" class="secondary-btn w-full rounded-2xl px-6 py-3" type="button">📷 วิธีเล่นด้วยกล้อง AI</button>
         </form>
 
         <div class="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400">
-          <span id="apiStatusDot" class="status-dot"></span>
-          <span id="apiStatusText">
-            กำลังตรวจสอบระบบบันทึกข้อมูล
-          </span>
+          <span id="apiStatusDot" class="status-dot"></span><span id="apiStatusText">กำลังตรวจสอบระบบบันทึกข้อมูล</span>
         </div>
       </div>
     </section>
 
-    <!-- GAME -->
-    <section
-      id="gameScreen"
-      class="screen flex-col px-3 pb-8 pt-3 md:px-6"
-    >
+    <!-- ========================================== -->
+    <!-- GAME SCREEN -->
+    <!-- ========================================== -->
+    <section id="gameScreen" class="screen flex-col px-3 pb-8 pt-3 md:px-6">
       <header class="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3">
         <div class="hud-chip flex items-center gap-3 rounded-2xl px-4 py-2">
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/194/194936.png"
-            alt="อ.พี่นัท"
-            class="creator-mini-logo"
-            referrerpolicy="no-referrer"
-          >
-
-          <div>
-            <p class="text-xs text-slate-400">ผู้เล่น</p>
-            <p id="playerName" class="font-semibold text-cyan-200">-</p>
-          </div>
+          <img src="https://cdn-icons-png.flaticon.com/512/194/194936.png" class="creator-mini-logo" referrerpolicy="no-referrer">
+          <div><p class="text-xs text-slate-400">ผู้เล่น</p><p id="playerName" class="font-semibold text-cyan-200">-</p></div>
         </div>
 
         <div class="flex flex-wrap items-center justify-end gap-2">
-          <div class="hud-chip rounded-2xl px-4 py-2 text-center">
-            <p class="text-xs text-slate-400">ข้อ</p>
-            <p id="questionProgress" class="font-bold">1 / 5</p>
-          </div>
-
-          <div class="hud-chip rounded-2xl px-4 py-2 text-center">
-            <p class="text-xs text-slate-400">คะแนน</p>
-            <p id="scoreText" class="font-bold text-yellow-300">0</p>
-          </div>
-
-          <div class="hud-chip rounded-2xl px-4 py-2 text-center">
-            <p class="text-xs text-slate-400">พลังงาน</p>
-            <p id="energyText" class="text-lg">❤️❤️❤️❤️❤️</p>
-          </div>
-
-          <div
-            id="timerRing"
-            class="relative flex h-16 w-16 items-center justify-center rounded-full"
-          >
-            <span id="timerText" class="text-xl font-extrabold">25</span>
-          </div>
-
-          <button
-            id="toggleCameraButton"
-            class="secondary-btn rounded-xl px-3 py-2 text-sm"
-            type="button"
-          >
-            📷 กล้อง
-          </button>
+          <div class="hud-chip rounded-2xl px-4 py-2 text-center"><p class="text-xs text-slate-400">ข้อ</p><p id="questionProgress" class="font-bold">1 / 5</p></div>
+          <div class="hud-chip rounded-2xl px-4 py-2 text-center"><p class="text-xs text-slate-400">คะแนน</p><p id="scoreText" class="font-bold text-yellow-300">0</p></div>
+          <div class="hud-chip rounded-2xl px-4 py-2 text-center"><p class="text-xs text-slate-400">พลังงาน</p><p id="energyText" class="text-lg">❤️❤️❤️❤️❤️</p></div>
+          <div id="timerRing" class="relative flex h-16 w-16 items-center justify-center rounded-full"><span id="timerText" class="text-xl font-extrabold">25</span></div>
+          <button id="toggleCameraButton" class="secondary-btn rounded-xl px-3 py-2 text-sm" type="button">📷 กล้อง</button>
         </div>
       </header>
 
       <div class="mx-auto mt-4 w-full max-w-7xl">
         <article id="questionCard" class="glass rounded-3xl p-5 md:p-7">
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <span
-              id="categoryText"
-              class="category-badge rounded-full px-3 py-1 text-xs"
-            >
-              หมวดหมู่
-            </span>
-
-            <span id="controlModeText" class="text-xs text-slate-400">
-              โหมด: คลิก/สัมผัส
-            </span>
+            <span id="categoryText" class="category-badge rounded-full px-3 py-1 text-xs">หมวดหมู่</span>
+            <span id="controlModeText" class="text-xs text-slate-400">โหมด: คลิก/สัมผัส</span>
           </div>
-
-          <h2
-            id="questionText"
-            class="text-xl font-semibold leading-relaxed md:text-3xl"
-          >
-            กำลังเตรียมคำถาม...
-          </h2>
+          <h2 id="questionText" class="text-xl font-semibold leading-relaxed md:text-3xl">กำลังเตรียมคำถาม...</h2>
         </article>
-        
-        <!-- Player Avatar Tracker -->
-        <div id="playerAvatarTracker">
-          <div id="avatarDoll">🧑‍🚀</div>
+
+        <!-- Player Avatar Real-time Tracker (สไตล์เก่า) -->
+        <div class="relative w-full h-8 mb-4 mt-8 z-20 interactive">
+            <div id="player-indicator" class="absolute top-0 w-14 h-14 bg-cyan-600 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(34,211,238,0.8)] border-2 border-white transition-all duration-75 transform -translate-x-1/2 -translate-y-6" style="left: 50%; display: none;">
+                <i class="fa-solid fa-street-view text-3xl drop-shadow-md"></i>
+            </div>
         </div>
 
         <div id="answersContainer" class="answers-grid mt-4"></div>
-
-        <div class="mt-4 text-center text-xs text-slate-400">
-          เดินสลับซ้าย-กลาง-ขวา ไปยังโซนคำตอบ แล้วกระโดดเพื่อยืนยัน (ไอคอนจะวิ่งตามตัวคุณ)
+        <div class="mt-6 text-center text-sm text-cyan-200 animate-pulse font-medium">
+          เดินสลับ ซ้าย-กลาง-ขวา ไปยังโซนคำตอบ แล้ว "กระโดด" เพื่อยืนยัน (ไอคอนจะวิ่งตามตัวคุณ)
         </div>
       </div>
     </section>
 
-    <!-- RESULT -->
-    <section
-      id="resultScreen"
-      class="screen items-center justify-center px-4 py-10"
-    >
+    <!-- ========================================== -->
+    <!-- RESULT SCREEN -->
+    <!-- ========================================== -->
+    <section id="resultScreen" class="screen items-center justify-center px-4 py-10">
       <div class="glass w-full max-w-3xl rounded-3xl p-6 text-center md:p-10">
-        <img
-          src="https://cdn-icons-png.flaticon.com/512/194/194936.png"
-          alt="โลโก้ อ.พี่นัท"
-          class="creator-logo mx-auto"
-          referrerpolicy="no-referrer"
-        >
-
-        <div class="mt-3">
-          <span class="creator-credit">
-            จัดทำโดย&nbsp;<strong>อ.พี่นัท</strong>
-          </span>
-        </div>
-
+        <img src="https://cdn-icons-png.flaticon.com/512/194/194936.png" class="creator-logo mx-auto" referrerpolicy="no-referrer">
+        <div class="mt-3"><span class="creator-credit">จัดทำโดย&nbsp;<strong>อ.พี่นัท</strong></span></div>
         <div id="resultIcon" class="mb-3 mt-5 text-7xl">🏆</div>
-
-        <p class="tracking-[0.25em] text-cyan-300">
-          MISSION COMPLETE
-        </p>
-
-        <h2 class="neon-title mt-2 text-3xl font-extrabold md:text-5xl">
-          สรุปผลภารกิจ
-        </h2>
-
+        <p class="tracking-[0.25em] text-cyan-300">MISSION COMPLETE</p>
+        <h2 class="neon-title mt-2 text-3xl font-extrabold md:text-5xl">สรุปผลภารกิจ</h2>
         <p id="resultPlayerName" class="mt-3 text-slate-300"></p>
 
         <div class="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="dashboard-card rounded-2xl p-4">
-            <p class="text-sm text-slate-400">คะแนน</p>
-            <p
-              id="finalScore"
-              class="text-3xl font-extrabold text-yellow-300"
-            >
-              0
-            </p>
-          </div>
-
-          <div class="dashboard-card rounded-2xl p-4">
-            <p class="text-sm text-slate-400">ตอบถูก</p>
-            <p
-              id="finalCorrect"
-              class="text-3xl font-extrabold text-green-400"
-            >
-              0
-            </p>
-          </div>
-
-          <div class="dashboard-card rounded-2xl p-4">
-            <p class="text-sm text-slate-400">ตอบผิด</p>
-            <p
-              id="finalWrong"
-              class="text-3xl font-extrabold text-red-400"
-            >
-              0
-            </p>
-          </div>
-
-          <div class="dashboard-card rounded-2xl p-4">
-            <p class="text-sm text-slate-400">ความแม่นยำ</p>
-            <p
-              id="finalAccuracy"
-              class="text-3xl font-extrabold text-cyan-300"
-            >
-              0%
-            </p>
-          </div>
+          <div class="dashboard-card rounded-2xl p-4"><p class="text-sm text-slate-400">คะแนน</p><p id="finalScore" class="text-3xl font-extrabold text-yellow-300">0</p></div>
+          <div class="dashboard-card rounded-2xl p-4"><p class="text-sm text-slate-400">ตอบถูก</p><p id="finalCorrect" class="text-3xl font-extrabold text-green-400">0</p></div>
+          <div class="dashboard-card rounded-2xl p-4"><p class="text-sm text-slate-400">ตอบผิด</p><p id="finalWrong" class="text-3xl font-extrabold text-red-400">0</p></div>
+          <div class="dashboard-card rounded-2xl p-4"><p class="text-sm text-slate-400">ความแม่นยำ</p><p id="finalAccuracy" class="text-3xl font-extrabold text-cyan-300">0%</p></div>
         </div>
 
-        <div
-          id="saveStatus"
-          class="mt-5 rounded-xl bg-slate-950/40 px-4 py-3 text-sm text-slate-300"
-        >
-          กำลังบันทึกผล...
-        </div>
+        <div id="saveStatus" class="mt-5 rounded-xl bg-slate-950/40 px-4 py-3 text-sm text-slate-300">กำลังบันทึกผล...</div>
 
         <div class="mt-6 grid gap-3 sm:grid-cols-2">
-          <button
-            id="playAgainButton"
-            class="primary-btn rounded-2xl px-6 py-4 font-bold"
-            type="button"
-          >
-            🔄 เล่นอีกครั้ง
-          </button>
-
-          <button
-            id="backHomeButton"
-            class="secondary-btn rounded-2xl px-6 py-4 font-bold"
-            type="button"
-          >
-            🏠 กลับหน้าหลัก
-          </button>
+          <button id="playAgainButton" class="primary-btn rounded-2xl px-6 py-4 font-bold" type="button">🔄 เล่นอีกครั้ง</button>
+          <button id="backHomeButton" class="secondary-btn rounded-2xl px-6 py-4 font-bold" type="button">🏠 กลับหน้าหลัก</button>
         </div>
       </div>
     </section>
 
-    <!-- DASHBOARD -->
-    <section
-      id="dashboardScreen"
-      class="screen flex-col px-4 py-6"
-    >
+    <!-- ========================================== -->
+    <!-- DASHBOARD SCREEN -->
+    <!-- ========================================== -->
+    <section id="dashboardScreen" class="screen flex-col px-4 py-6">
       <div class="mx-auto w-full max-w-7xl">
         <header class="glass mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4">
           <div class="flex items-center gap-3">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/194/194936.png"
-              alt="โลโก้ อ.พี่นัท"
-              class="creator-mini-logo"
-              referrerpolicy="no-referrer"
-            >
-
-            <div>
-              <p class="text-sm tracking-[0.2em] text-cyan-300">
-                TEACHER CONTROL CENTER
-              </p>
-
-              <h2 class="text-2xl font-bold">
-                แดชบอร์ดครูผู้สอน
-              </h2>
-
-              <p class="text-xs text-slate-400">
-                จัดทำโดย อ.พี่นัท
-              </p>
-            </div>
+            <img src="https://cdn-icons-png.flaticon.com/512/194/194936.png" class="creator-mini-logo" referrerpolicy="no-referrer">
+            <div><p class="text-sm tracking-[0.2em] text-cyan-300">TEACHER CONTROL CENTER</p><h2 class="text-2xl font-bold">แดชบอร์ดครูผู้สอน</h2></div>
           </div>
-
           <div class="flex gap-2">
-            <button
-              id="refreshDashboardButton"
-              class="primary-btn rounded-xl px-4 py-2"
-              type="button"
-            >
-              รีเฟรชข้อมูล
-            </button>
-
-            <button
-              id="dashboardLogoutButton"
-              class="secondary-btn rounded-xl px-4 py-2"
-              type="button"
-            >
-              ออกจากระบบ
-            </button>
+            <button id="refreshDashboardButton" class="primary-btn rounded-xl px-4 py-2" type="button">รีเฟรชข้อมูล</button>
+            <button id="dashboardLogoutButton" class="secondary-btn rounded-xl px-4 py-2" type="button">ออกจากระบบ</button>
           </div>
         </header>
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="dashboard-card glass rounded-2xl p-5">
-            <p class="text-sm text-slate-400">จำนวนรอบทั้งหมด</p>
-            <p
-              id="dashAttempts"
-              class="mt-2 text-3xl font-extrabold text-cyan-300"
-            >
-              0
-            </p>
-          </div>
-
-          <div class="dashboard-card glass rounded-2xl p-5">
-            <p class="text-sm text-slate-400">จำนวนนักเรียน</p>
-            <p
-              id="dashStudents"
-              class="mt-2 text-3xl font-extrabold text-purple-300"
-            >
-              0
-            </p>
-          </div>
-
-          <div class="dashboard-card glass rounded-2xl p-5">
-            <p class="text-sm text-slate-400">คะแนนเฉลี่ย</p>
-            <p
-              id="dashAverageScore"
-              class="mt-2 text-3xl font-extrabold text-yellow-300"
-            >
-              0
-            </p>
-          </div>
-
-          <div class="dashboard-card glass rounded-2xl p-5">
-            <p class="text-sm text-slate-400">ความแม่นยำเฉลี่ย</p>
-            <p
-              id="dashAccuracy"
-              class="mt-2 text-3xl font-extrabold text-green-300"
-            >
-              0%
-            </p>
-          </div>
+          <div class="dashboard-card glass rounded-2xl p-5"><p class="text-sm text-slate-400">จำนวนรอบทั้งหมด</p><p id="dashAttempts" class="mt-2 text-3xl font-extrabold text-cyan-300">0</p></div>
+          <div class="dashboard-card glass rounded-2xl p-5"><p class="text-sm text-slate-400">จำนวนนักเรียน</p><p id="dashStudents" class="mt-2 text-3xl font-extrabold text-purple-300">0</p></div>
+          <div class="dashboard-card glass rounded-2xl p-5"><p class="text-sm text-slate-400">คะแนนเฉลี่ย</p><p id="dashAverageScore" class="mt-2 text-3xl font-extrabold text-yellow-300">0</p></div>
+          <div class="dashboard-card glass rounded-2xl p-5"><p class="text-sm text-slate-400">ความแม่นยำเฉลี่ย</p><p id="dashAccuracy" class="mt-2 text-3xl font-extrabold text-green-300">0%</p></div>
         </div>
 
         <div class="mt-5 grid gap-5 lg:grid-cols-2">
-          <div class="dashboard-card glass rounded-2xl p-4">
-            <h3 class="mb-4 font-semibold text-cyan-200">
-              ความแม่นยำรายหมวดหมู่
-            </h3>
-
-            <div class="h-[340px]">
-              <canvas id="categoryChart"></canvas>
-            </div>
-          </div>
-
-          <div class="dashboard-card glass rounded-2xl p-4">
-            <h3 class="mb-4 font-semibold text-cyan-200">
-              คะแนนการเล่นล่าสุด
-            </h3>
-
-            <div class="h-[340px]">
-              <canvas id="scoreChart"></canvas>
-            </div>
-          </div>
+          <div class="dashboard-card glass rounded-2xl p-4"><h3 class="mb-4 font-semibold text-cyan-200">ความแม่นยำรายหมวดหมู่</h3><div class="h-[340px]"><canvas id="categoryChart"></canvas></div></div>
+          <div class="dashboard-card glass rounded-2xl p-4"><h3 class="mb-4 font-semibold text-cyan-200">คะแนนการเล่นล่าสุด</h3><div class="h-[340px]"><canvas id="scoreChart"></canvas></div></div>
         </div>
 
         <div class="dashboard-card glass mt-5 rounded-2xl p-4">
-          <h3 class="mb-4 font-semibold text-cyan-200">
-            ประวัติการเล่นล่าสุด
-          </h3>
-
+          <h3 class="mb-4 font-semibold text-cyan-200">ประวัติการเล่นล่าสุด</h3>
           <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>วันเวลา</th>
-                  <th>ชื่อผู้เล่น</th>
-                  <th>คะแนน</th>
-                  <th>ถูก</th>
-                  <th>ผิด</th>
-                  <th>ความแม่นยำ</th>
-                  <th>อุปกรณ์</th>
-                </tr>
-              </thead>
-
-              <tbody id="historyTableBody"></tbody>
-            </table>
+            <table><thead><tr><th>วันเวลา</th><th>ชื่อผู้เล่น</th><th>คะแนน</th><th>ถูก</th><th>ผิด</th><th>ความแม่นยำ</th><th>อุปกรณ์</th></tr></thead><tbody id="historyTableBody"></tbody></table>
           </div>
         </div>
-
-        <footer class="mt-6 text-center">
-          <div class="inline-flex items-center gap-3 rounded-full border border-cyan-400/20 bg-slate-950/50 px-5 py-2">
-            <img
-              src="https://postimg.cc/vczmcLPB"
-              alt="โลโก้ อ.พี่นัท"
-              class="creator-mini-logo"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-            >
-
-            <span class="text-sm text-cyan-100">
-              SCIENCE MISSION V3 — จัดทำโดย
-              <strong>อ.พี่นัท</strong>
-            </span>
-          </div>
-        </footer>
       </div>
     </section>
   </main>
@@ -1131,2487 +362,579 @@
   <aside id="cameraPanel" class="hidden-panel">
     <div id="cameraHandle">
       <span>⠿ AI POSE CAMERA</span>
-
       <div class="flex gap-2">
-        <button
-          id="calibrateButton"
-          class="camera-control"
-          type="button"
-          title="ปรับเทียบ"
-        >
-          🎯
-        </button>
-
-        <button
-          id="closeCameraButton"
-          class="camera-control"
-          type="button"
-          title="ซ่อนกล้อง"
-        >
-          ✕
-        </button>
+        <button id="calibrateButton" class="camera-control" type="button" title="ปรับเทียบ">🎯</button>
+        <button id="closeCameraButton" class="camera-control" type="button" title="ซ่อนกล้อง">✕</button>
       </div>
     </div>
-
     <div id="cameraStage">
-      <video id="cameraVideo" playsinline muted></video>
-      <canvas id="poseCanvas" width="640" height="480"></canvas>
+      <video id="cameraVideo" playsinline muted></video><canvas id="poseCanvas" width="640" height="480"></canvas>
       <div id="cameraStatus">ยังไม่ได้เปิดกล้อง</div>
     </div>
   </aside>
 
   <!-- FEEDBACK -->
   <div id="jumpFlash"></div>
-  
-  <div id="feedbackOverlay" class="feedback-overlay">
-    <div id="feedbackSymbol" class="feedback-symbol"></div>
-  </div>
+  <div id="feedbackOverlay" class="feedback-overlay"><div id="feedbackSymbol" class="feedback-symbol"></div></div>
 
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT SYSTEM LOGIC -->
+  <!-- ========================================== -->
   <script>
     "use strict";
 
-    /* =====================================================
-       CONFIGURATION
-    ===================================================== */
-
+    /* --- CONFIGURATION --- */
     const CONFIG = Object.freeze({
-      API_URL:
-        "https://script.google.com/macros/s/AKfycbwuz29I3dKjc0brSgLWHFJmlpPrb-G4c2Xt-ESXY6LemtH5Chjbp6jtki0IxvXsXTC9/exec",
-
-      CREATOR_NAME: "อ.พี่นัท",
-      CREATOR_LOGO:
-        "https://cdn-icons-png.flaticon.com/512/194/194936.png",
-
-      QUESTIONS_PER_ROUND: 5,
-      TIME_PER_QUESTION: 25,
-      MAX_ENERGY: 5,
-      SCORE_PER_QUESTION: 20,
-
-      FEEDBACK_DELAY: 1500,
-      API_TIMEOUT: 15000,
-
-      JUMP_THRESHOLD: 0.085,
-      JUMP_RESET_THRESHOLD: 0.025,
-      JUMP_COOLDOWN: 1600,
-      CALIBRATION_TIME: 2200,
-
-      PENDING_STORAGE_KEY:
-        "scienceMissionPendingAttemptV3"
+      API_URL: "https://script.google.com/macros/s/AKfycbwuz29I3dKjc0brSgLWHFJmlpPrb-G4c2Xt-ESXY6LemtH5Chjbp6jtki0IxvXsXTC9/exec",
+      QUESTIONS_PER_ROUND: 5, TIME_PER_QUESTION: 25, MAX_ENERGY: 5, SCORE_PER_QUESTION: 20,
+      FEEDBACK_DELAY: 1500, API_TIMEOUT: 15000,
+      JUMP_THRESHOLD: 0.055, // ความไวของการกระโดด (ลดเพื่อโดดง่ายขึ้น)
+      JUMP_RESET_THRESHOLD: 0.015, JUMP_COOLDOWN: 1600, CALIBRATION_TIME: 2200,
+      PENDING_STORAGE_KEY: "scienceMissionPendingAttemptV3"
     });
 
-    /* =====================================================
-       QUESTION BANK
-       correctIndex เริ่มจาก 0
-    ===================================================== */
-
+    /* --- QUESTION BANK (30 ข้อ) --- */
     const QUESTION_BANK = [
-      {
-        id: "Q001",
-        category: "พื้นฐานโครงงาน",
-        question:
-          "จุดเริ่มต้นที่สำคัญที่สุดของการทำโครงงานวิทยาศาสตร์คือข้อใด?",
-        choices: [
-          "การศึกษาข้อมูลจากอินเทอร์เน็ต",
-          "การสังเกตและการเลือกปัญหาที่สนใจ",
-          "การนำเสนอผลงาน"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q002",
-        category: "การวิเคราะห์ปัญหา",
-        question:
-          "ในแผนภาพต้นไม้ปัญหา ส่วนของ “รากแก้ว” เปรียบเสมือนสิ่งใด?",
-        choices: [
-          "ผลกระทบที่เกิดขึ้น",
-          "สาเหตุหลักของปัญหา",
-          "ปัญหาหลักที่ต้องการแก้ไข"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q003",
-        category: "การวิเคราะห์ปัญหา",
-        question:
-          "จากปัญหา “ขยะล้นถังในโรงเรียน” ข้อใดจัดเป็นผลกระทบในแผนภาพต้นไม้?",
-        choices: [
-          "นักเรียนไม่ยอมแยกขยะ",
-          "ถังขยะมีจำนวนไม่เพียงพอ",
-          "ส่งกลิ่นเหม็นและเป็นแหล่งเพาะพันธุ์เชื้อโรค"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q004",
-        category: "การทำงานเป็นทีม",
-        question:
-          "การที่สมาชิกในทีมแชร์ว่า “ตนเองเก่งอะไร” และ “สนใจอะไร” มีจุดประสงค์หลักเพื่อสิ่งใด?",
-        choices: [
-          "เพื่อให้ครูให้คะแนนง่ายขึ้น",
-          "เพื่อกำหนดทิศทางและความสนใจร่วมกันของทีม",
-          "เพื่อจับผิดเพื่อนที่ไม่ได้ทำงาน"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q005",
-        category: "ประเภทโครงงาน",
-        question:
-          "โครงงานที่ลงพื้นที่เพื่อหาคำตอบว่า “มีอะไรอยู่เท่าไหร่” เช่น การเดินนับหรือแจกแบบสอบถาม เป็นโครงงานประเภทใด?",
-        choices: [
-          "โครงงานประเภททดลอง",
-          "โครงงานประเภทสำรวจ",
-          "โครงงานประเภทสิ่งประดิษฐ์"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q006",
-        category: "ประเภทโครงงาน",
-        question:
-          "หัวข้อ “การศึกษาพฤติกรรมการทิ้งขยะพลาสติกของนักเรียน” จัดเป็นโครงงานประเภทใด?",
-        choices: [
-          "โครงงานประเภทสำรวจ",
-          "โครงงานประเภททดลอง",
-          "โครงงานประเภทสิ่งประดิษฐ์"
-        ],
-        correctIndex: 0
-      },
-      {
-        id: "Q007",
-        category: "ประเภทโครงงาน",
-        question:
-          "หัวข้อ “เครื่องกรองฝุ่น PM 2.5 พลังงานแสงอาทิตย์จากเปลือกข้าวโพด” จัดเป็นโครงงานประเภทใด?",
-        choices: [
-          "โครงงานประเภทสำรวจ",
-          "โครงงานประเภททดลอง",
-          "โครงงานประเภทสิ่งประดิษฐ์"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q008",
-        category: "ประเภทโครงงาน",
-        question:
-          "โครงงานที่มีการแบ่งกลุ่มทดลอง ตั้งสมมติฐาน และควบคุมตัวแปรอย่างชัดเจน เป็นโครงงานประเภทใด?",
-        choices: [
-          "โครงงานประเภทสำรวจ",
-          "โครงงานประเภททดลอง",
-          "โครงงานประเภทสิ่งประดิษฐ์"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q009",
-        category: "ประเภทโครงงาน",
-        question:
-          "โครงงานที่ใช้หลักการหรือสูตรทางคณิตศาสตร์มาอธิบายเรื่องที่ยังไม่มีใครพิสูจน์ได้ เป็นโครงงานประเภทใด?",
-        choices: [
-          "โครงงานประเภทสำรวจ",
-          "โครงงานประเภททดลอง",
-          "โครงงานประเภททฤษฎี"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q010",
-        category: "สมมติฐาน",
-        question:
-          "การคาดคะเนคำตอบล่วงหน้าอย่างมีเหตุผล เรียกว่าอะไร?",
-        choices: [
-          "การกำหนดตัวแปร",
-          "การตั้งสมมติฐาน",
-          "การสรุปผล"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q011",
-        category: "ตัวแปร",
-        question:
-          "สิ่งที่ผู้ทดลองตั้งใจจัดให้แตกต่างกัน เพื่อศึกษาว่าเป็นสาเหตุของผลลัพธ์หรือไม่ คือข้อใด?",
-        choices: [
-          "ตัวแปรต้น",
-          "ตัวแปรตาม",
-          "ตัวแปรควบคุม"
-        ],
-        correctIndex: 0
-      },
-      {
-        id: "Q012",
-        category: "ตัวแปร",
-        question:
-          "สิ่งที่ต้องจัดให้เหมือนกันทุกประการ เพื่อไม่ให้ผลการทดลองคลาดเคลื่อน คือข้อใด?",
-        choices: [
-          "ตัวแปรต้น",
-          "ตัวแปรตาม",
-          "ตัวแปรควบคุม"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q013",
-        category: "ตัวแปร",
-        question:
-          "ฟารุดทดลองผลของปริมาณแสงแดดต่อความสูงของต้นมะเขือเทศ โดยใช้ต้นพันธุ์เดียวกันและรดน้ำเท่ากัน ตัวแปรต้นคือข้อใด?",
-        choices: [
-          "ปริมาณแสงแดด",
-          "ความสูงของต้นมะเขือเทศ",
-          "ปริมาณน้ำที่รด"
-        ],
-        correctIndex: 0
-      },
-      {
-        id: "Q014",
-        category: "ตัวแปร",
-        question:
-          "ฟารุดทดลองผลของปริมาณแสงแดดต่อความสูงของต้นมะเขือเทศ โดยใช้ต้นพันธุ์เดียวกันและรดน้ำเท่ากัน ตัวแปรตามคือข้อใด?",
-        choices: [
-          "ปริมาณแสงแดด",
-          "ความสูงของต้นมะเขือเทศ",
-          "ปริมาณน้ำที่รด"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q015",
-        category: "ตัวแปร",
-        question:
-          "ฟารุดทดลองผลของปริมาณแสงแดดต่อความสูงของต้นมะเขือเทศ ตัวแปรควบคุมคือข้อใด?",
-        choices: [
-          "ปริมาณแสงแดดและสถานที่วางกระถาง",
-          "ความสูงและจำนวนใบของต้นมะเขือเทศ",
-          "ปริมาณน้ำและสายพันธุ์ของต้นมะเขือเทศ"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q016",
-        category: "ตัวแปร",
-        question:
-          "อาลีฟทดลองว่าน้ำยาล้างจานยี่ห้อ A, B และ C ขจัดคราบมันได้แตกต่างกันหรือไม่ ตัวแปรต้นคือข้อใด?",
-        choices: [
-          "ปริมาณคราบมัน",
-          "ยี่ห้อของน้ำยาล้างจาน",
-          "ความสะอาดของจาน"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q017",
-        category: "กระบวนการโครงงาน",
-        question:
-          "ข้อใดเรียงลำดับขั้นตอนการทำโครงงานได้ถูกต้อง?",
-        choices: [
-          "ตั้งสมมติฐาน → เลือกปัญหา → ทดลอง → สรุปผล",
-          "เลือกปัญหา → ทดลอง → ตั้งสมมติฐาน → สรุปผล",
-          "เลือกปัญหา → ตั้งสมมติฐาน → ทดลอง → สรุปผล"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q018",
-        category: "กระบวนการโครงงาน",
-        question:
-          "หลังจากทำการทดลองและบันทึกข้อมูลเรียบร้อยแล้ว ขั้นตอนต่อไปคือข้อใด?",
-        choices: [
-          "กำหนดตัวแปร",
-          "วิเคราะห์และแปลผลข้อมูล",
-          "จัดทำรายงานและนำเสนอ"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q019",
-        category: "กระบวนการโครงงาน",
-        question:
-          "การทำตารางและกราฟเพื่อแสดงผลการทดลอง อยู่ในขั้นตอนใด?",
-        choices: [
-          "กำหนดวัตถุประสงค์",
-          "วิเคราะห์และแปลผลข้อมูล",
-          "ศึกษาข้อมูลที่เกี่ยวข้อง"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q020",
-        category: "กระบวนการโครงงาน",
-        question:
-          "ขั้นตอนสุดท้ายของการทำโครงงานวิทยาศาสตร์คือข้อใด?",
-        choices: [
-          "สรุปผลและอภิปรายผล",
-          "จัดทำรายงานและนำเสนอ",
-          "วิเคราะห์ข้อมูล"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q021",
-        category: "รายงานโครงงาน",
-        question:
-          "รายงานโครงงานวิทยาศาสตร์โดยทั่วไปประกอบด้วยเนื้อหากี่บท?",
-        choices: [
-          "3 บท",
-          "4 บท",
-          "5 บท"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q022",
-        category: "รายงานโครงงาน",
-        question:
-          "ที่มาและความสำคัญของโครงงานควรเขียนไว้ในบทใด?",
-        choices: [
-          "บทที่ 1 บทนำ",
-          "บทที่ 2 เอกสารที่เกี่ยวข้อง",
-          "บทที่ 3 วิธีดำเนินการ"
-        ],
-        correctIndex: 0
-      },
-      {
-        id: "Q023",
-        category: "รายงานโครงงาน",
-        question:
-          "ความรู้พื้นฐาน หลักการทางวิทยาศาสตร์ และงานวิจัยที่เกี่ยวข้อง เป็นเนื้อหาของบทใด?",
-        choices: [
-          "บทที่ 1",
-          "บทที่ 2",
-          "บทที่ 3"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q024",
-        category: "รายงานโครงงาน",
-        question:
-          "วัสดุอุปกรณ์และขั้นตอนการทดลองควรอยู่ในบทใด?",
-        choices: [
-          "บทที่ 1",
-          "บทที่ 2",
-          "บทที่ 3"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q025",
-        category: "รายงานโครงงาน",
-        question:
-          "ตารางบันทึกผลการทดลองและกราฟแสดงข้อมูลควรอยู่ในบทใด?",
-        choices: [
-          "บทที่ 1",
-          "บทที่ 2",
-          "บทที่ 4"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q026",
-        category: "รายงานโครงงาน",
-        question:
-          "บรรณานุกรมควรจัดไว้ในส่วนใดของรายงาน?",
-        choices: [
-          "ส่วนต้นของรายงาน",
-          "ส่วนเนื้อหาบทที่ 1",
-          "ส่วนท้ายของรายงาน"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q027",
-        category: "ความน่าเชื่อถือของข้อมูล",
-        question:
-          "หากต้องการข้อมูลงานวิจัยที่น่าเชื่อถือ นามสกุลเว็บไซต์ใดเหมาะสมที่สุด?",
-        choices: [
-          ".com",
-          ".ac.th",
-          ".co.th"
-        ],
-        correctIndex: 1
-      },
-      {
-        id: "Q028",
-        category: "ความน่าเชื่อถือของข้อมูล",
-        question:
-          "นามสกุลเว็บไซต์ “.go.th” เป็นเว็บไซต์ของหน่วยงานใด?",
-        choices: [
-          "บริษัทหรือธุรกิจการค้า",
-          "องค์กรไม่แสวงหาผลกำไร",
-          "หน่วยงานของรัฐบาล"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q029",
-        category: "ความน่าเชื่อถือของข้อมูล",
-        question:
-          "แหล่งข้อมูลใดมีความน่าเชื่อถือน้อยที่สุดสำหรับใช้เป็นแหล่งอ้างอิงหลักในโครงงานสมุนไพรไล่ยุง?",
-        choices: [
-          "บทความวิจัยจากเว็บไซต์มหาวิทยาลัย",
-          "ข้อมูลพรรณไม้จากเว็บไซต์กรมป่าไม้",
-          "กระทู้เว็บบอร์ดเรื่องสูตรไล่ยุงของคุณยาย"
-        ],
-        correctIndex: 2
-      },
-      {
-        id: "Q030",
-        category: "ความน่าเชื่อถือของข้อมูล",
-        question:
-          "เหตุใดจึงไม่ควรเชื่อข่าวสุขภาพจากเว็บไซต์ที่มีปุ่มให้คลิกซื้อสินค้าในทันที?",
-        choices: [
-          "เพราะเป็นเว็บไซต์ของมหาวิทยาลัย",
-          "เพราะเว็บไซต์อาจมีผลประโยชน์แอบแฝงเพื่อขายสินค้า",
-          "เพราะสินค้านั้นหาซื้อได้ยาก"
-        ],
-        correctIndex: 1
-      }
+      { id: "Q001", category: "พื้นฐานโครงงาน", question: "จุดเริ่มต้นที่สำคัญที่สุดของการทำโครงงานวิทยาศาสตร์คือข้อใด?", choices: ["การศึกษาข้อมูลจากอินเทอร์เน็ต", "การสังเกตและการเลือกปัญหาที่สนใจ", "การนำเสนอผลงาน"], correctIndex: 1 },
+      { id: "Q002", category: "การวิเคราะห์ปัญหา", question: "ในแผนภาพต้นไม้ปัญหา ส่วนของ “รากแก้ว” เปรียบเสมือนสิ่งใด?", choices: ["ผลกระทบที่เกิดขึ้น", "สาเหตุหลักของปัญหา", "ปัญหาหลักที่ต้องการแก้ไข"], correctIndex: 1 },
+      { id: "Q003", category: "การวิเคราะห์ปัญหา", question: "จากปัญหา “ขยะล้นถังในโรงเรียน” ข้อใดจัดเป็นผลกระทบในแผนภาพต้นไม้?", choices: ["นักเรียนไม่ยอมแยกขยะ", "ถังขยะมีจำนวนไม่เพียงพอ", "ส่งกลิ่นเหม็นและเป็นแหล่งเพาะพันธุ์เชื้อโรค"], correctIndex: 2 },
+      { id: "Q004", category: "การทำงานเป็นทีม", question: "การที่สมาชิกในทีมแชร์ว่า “ตนเองเก่งอะไร” และ “สนใจอะไร” มีจุดประสงค์หลักเพื่อสิ่งใด?", choices: ["เพื่อให้ครูให้คะแนนง่ายขึ้น", "เพื่อกำหนดทิศทางและความสนใจร่วมกันของทีม", "เพื่อจับผิดเพื่อนที่ไม่ได้ทำงาน"], correctIndex: 1 },
+      { id: "Q005", category: "ประเภทโครงงาน", question: "โครงงานที่ลงพื้นที่เพื่อหาคำตอบว่า “มีอะไรอยู่เท่าไหร่” เช่น การเดินนับหรือแจกแบบสอบถาม เป็นโครงงานประเภทใด?", choices: ["โครงงานประเภททดลอง", "โครงงานประเภทสำรวจ", "โครงงานประเภทสิ่งประดิษฐ์"], correctIndex: 1 },
+      { id: "Q006", category: "ประเภทโครงงาน", question: "หัวข้อ “การศึกษาพฤติกรรมการทิ้งขยะพลาสติกของนักเรียน” จัดเป็นโครงงานประเภทใด?", choices: ["โครงงานประเภทสำรวจ", "โครงงานประเภททดลอง", "โครงงานประเภทสิ่งประดิษฐ์"], correctIndex: 0 },
+      { id: "Q007", category: "ประเภทโครงงาน", question: "หัวข้อ “เครื่องกรองฝุ่น PM 2.5 พลังงานแสงอาทิตย์จากเปลือกข้าวโพด” จัดเป็นโครงงานประเภทใด?", choices: ["โครงงานประเภทสำรวจ", "โครงงานประเภททดลอง", "โครงงานประเภทสิ่งประดิษฐ์"], correctIndex: 2 },
+      { id: "Q008", category: "ประเภทโครงงาน", question: "โครงงานที่มีการแบ่งกลุ่มทดลอง ตั้งสมมติฐาน และควบคุมตัวแปรอย่างชัดเจน เป็นโครงงานประเภทใด?", choices: ["โครงงานประเภทสำรวจ", "โครงงานประเภททดลอง", "โครงงานประเภทสิ่งประดิษฐ์"], correctIndex: 1 },
+      { id: "Q009", category: "ประเภทโครงงาน", question: "โครงงานที่ใช้หลักการหรือสูตรทางคณิตศาสตร์มาอธิบายเรื่องที่ยังไม่มีใครพิสูจน์ได้ เป็นโครงงานประเภทใด?", choices: ["โครงงานประเภทสำรวจ", "โครงงานประเภททดลอง", "โครงงานประเภททฤษฎี"], correctIndex: 2 },
+      { id: "Q010", category: "สมมติฐาน", question: "การคาดคะเนคำตอบล่วงหน้าอย่างมีเหตุผล เรียกว่าอะไร?", choices: ["การกำหนดตัวแปร", "การตั้งสมมติฐาน", "การสรุปผล"], correctIndex: 1 },
+      { id: "Q011", category: "ตัวแปร", question: "สิ่งที่ผู้ทดลองตั้งใจจัดให้แตกต่างกัน เพื่อศึกษาว่าเป็นสาเหตุของผลลัพธ์หรือไม่ คือข้อใด?", choices: ["ตัวแปรต้น", "ตัวแปรตาม", "ตัวแปรควบคุม"], correctIndex: 0 },
+      { id: "Q012", category: "ตัวแปร", question: "สิ่งที่ต้องจัดให้เหมือนกันทุกประการ เพื่อไม่ให้ผลการทดลองคลาดเคลื่อน คือข้อใด?", choices: ["ตัวแปรต้น", "ตัวแปรตาม", "ตัวแปรควบคุม"], correctIndex: 2 },
+      { id: "Q013", category: "ตัวแปร", question: "ฟารุดทดลองผลของปริมาณแสงแดดต่อความสูงของต้นมะเขือเทศ โดยใช้ต้นพันธุ์เดียวกันและรดน้ำเท่ากัน ตัวแปรต้นคือข้อใด?", choices: ["ปริมาณแสงแดด", "ความสูงของต้นมะเขือเทศ", "ปริมาณน้ำที่รด"], correctIndex: 0 },
+      { id: "Q014", category: "ตัวแปร", question: "ฟารุดทดลองผลของปริมาณแสงแดดต่อความสูงของต้นมะเขือเทศ โดยใช้ต้นพันธุ์เดียวกันและรดน้ำเท่ากัน ตัวแปรตามคือข้อใด?", choices: ["ปริมาณแสงแดด", "ความสูงของต้นมะเขือเทศ", "ปริมาณน้ำที่รด"], correctIndex: 1 },
+      { id: "Q015", category: "ตัวแปร", question: "ฟารุดทดลองผลของปริมาณแสงแดดต่อความสูงของต้นมะเขือเทศ ตัวแปรควบคุมคือข้อใด?", choices: ["ปริมาณแสงแดดและสถานที่วางกระถาง", "ความสูงและจำนวนใบของต้นมะเขือเทศ", "ปริมาณน้ำและสายพันธุ์ของต้นมะเขือเทศ"], correctIndex: 2 },
+      { id: "Q016", category: "ตัวแปร", question: "อาลีฟทดลองว่าน้ำยาล้างจานยี่ห้อ A, B และ C ขจัดคราบมันได้แตกต่างกันหรือไม่ ตัวแปรต้นคือข้อใด?", choices: ["ปริมาณคราบมัน", "ยี่ห้อของน้ำยาล้างจาน", "ความสะอาดของจาน"], correctIndex: 1 },
+      { id: "Q017", category: "กระบวนการโครงงาน", question: "ข้อใดเรียงลำดับขั้นตอนการทำโครงงานได้ถูกต้อง?", choices: ["ตั้งสมมติฐาน → เลือกปัญหา → ทดลอง → สรุปผล", "เลือกปัญหา → ทดลอง → ตั้งสมมติฐาน → สรุปผล", "เลือกปัญหา → ตั้งสมมติฐาน → ทดลอง → สรุปผล"], correctIndex: 2 },
+      { id: "Q018", category: "กระบวนการโครงงาน", question: "หลังจากทำการทดลองและบันทึกข้อมูลเรียบร้อยแล้ว ขั้นตอนต่อไปคือข้อใด?", choices: ["กำหนดตัวแปร", "วิเคราะห์และแปลผลข้อมูล", "จัดทำรายงานและนำเสนอ"], correctIndex: 1 },
+      { id: "Q019", category: "กระบวนการโครงงาน", question: "การทำตารางและกราฟเพื่อแสดงผลการทดลอง อยู่ในขั้นตอนใด?", choices: ["กำหนดวัตถุประสงค์", "วิเคราะห์และแปลผลข้อมูล", "ศึกษาข้อมูลที่เกี่ยวข้อง"], correctIndex: 1 },
+      { id: "Q020", category: "กระบวนการโครงงาน", question: "ขั้นตอนสุดท้ายของการทำโครงงานวิทยาศาสตร์คือข้อใด?", choices: ["สรุปผลและอภิปรายผล", "จัดทำรายงานและนำเสนอ", "วิเคราะห์ข้อมูล"], correctIndex: 1 },
+      { id: "Q021", category: "รายงานโครงงาน", question: "รายงานโครงงานวิทยาศาสตร์โดยทั่วไปประกอบด้วยเนื้อหากี่บท?", choices: ["3 บท", "4 บท", "5 บท"], correctIndex: 2 },
+      { id: "Q022", category: "รายงานโครงงาน", question: "ที่มาและความสำคัญของโครงงานควรเขียนไว้ในบทใด?", choices: ["บทที่ 1 บทนำ", "บทที่ 2 เอกสารที่เกี่ยวข้อง", "บทที่ 3 วิธีดำเนินการ"], correctIndex: 0 },
+      { id: "Q023", category: "รายงานโครงงาน", question: "ความรู้พื้นฐาน หลักการทางวิทยาศาสตร์ และงานวิจัยที่เกี่ยวข้อง เป็นเนื้อหาของบทใด?", choices: ["บทที่ 1", "บทที่ 2", "บทที่ 3"], correctIndex: 1 },
+      { id: "Q024", category: "รายงานโครงงาน", question: "วัสดุอุปกรณ์และขั้นตอนการทดลองควรอยู่ในบทใด?", choices: ["บทที่ 1", "บทที่ 2", "บทที่ 3"], correctIndex: 2 },
+      { id: "Q025", category: "รายงานโครงงาน", question: "ตารางบันทึกผลการทดลองและกราฟแสดงข้อมูลควรอยู่ในบทใด?", choices: ["บทที่ 1", "บทที่ 2", "บทที่ 4"], correctIndex: 2 },
+      { id: "Q026", category: "รายงานโครงงาน", question: "บรรณานุกรมควรจัดไว้ในส่วนใดของรายงาน?", choices: ["ส่วนต้นของรายงาน", "ส่วนเนื้อหาบทที่ 1", "ส่วนท้ายของรายงาน"], correctIndex: 2 },
+      { id: "Q027", category: "ความน่าเชื่อถือของข้อมูล", question: "หากต้องการข้อมูลงานวิจัยที่น่าเชื่อถือ นามสกุลเว็บไซต์ใดเหมาะสมที่สุด?", choices: [".com", ".ac.th", ".co.th"], correctIndex: 1 },
+      { id: "Q028", category: "ความน่าเชื่อถือของข้อมูล", question: "นามสกุลเว็บไซต์ “.go.th” เป็นเว็บไซต์ของหน่วยงานใด?", choices: ["บริษัทหรือธุรกิจการค้า", "องค์กรไม่แสวงหาผลกำไร", "หน่วยงานของรัฐบาล"], correctIndex: 2 },
+      { id: "Q029", category: "ความน่าเชื่อถือของข้อมูล", question: "แหล่งข้อมูลใดมีความน่าเชื่อถือน้อยที่สุดสำหรับใช้เป็นแหล่งอ้างอิงหลักในโครงงานสมุนไพรไล่ยุง?", choices: ["บทความวิจัยจากเว็บไซต์มหาวิทยาลัย", "ข้อมูลพรรณไม้จากเว็บไซต์กรมป่าไม้", "กระทู้เว็บบอร์ดเรื่องสูตรไล่ยุงของคุณยาย"], correctIndex: 2 },
+      { id: "Q030", category: "ความน่าเชื่อถือของข้อมูล", question: "เหตุใดจึงไม่ควรเชื่อข่าวสุขภาพจากเว็บไซต์ที่มีปุ่มให้คลิกซื้อสินค้าในทันที?", choices: ["เพราะเป็นเว็บไซต์ของมหาวิทยาลัย", "เพราะเว็บไซต์อาจมีผลประโยชน์แอบแฝงเพื่อขายสินค้า", "เพราะสินค้านั้นหาซื้อได้ยาก"], correctIndex: 1 }
     ];
 
-    /* =====================================================
-       STATE
-    ===================================================== */
-
+    /* --- STATE --- */
     const state = {
-      student: null,
-      roundQuestions: [],
-      currentIndex: 0,
-      energy: CONFIG.MAX_ENERGY,
-      score: 0,
-      correct: 0,
-      wrong: 0,
-      results: [],
-      attemptId: "",
-      roundStartedAt: 0,
-      questionStartedAt: 0,
-      remainingTime: CONFIG.TIME_PER_QUESTION,
-      timerId: null,
-      answerLocked: false,
-
-      audioContext: null,
-
-      cameraStarted: false,
-      cameraVisible: false,
-      pose: null,
-      camera: null,
-
-      isCalibrating: false,
-      calibrationValues: [],
-      baselineHipY: null,
-      jumpArmed: true,
-      lastJumpAt: 0,
-      activeZone: -1,
-
-      teacherPassword: "",
-      categoryChart: null,
-      scoreChart: null
+      student: null, roundQuestions: [], currentIndex: 0, energy: CONFIG.MAX_ENERGY, score: 0,
+      correct: 0, wrong: 0, results: [], attemptId: "", roundStartedAt: 0, questionStartedAt: 0,
+      remainingTime: CONFIG.TIME_PER_QUESTION, timerId: null, answerLocked: false, audioContext: null,
+      cameraStarted: false, cameraVisible: false, pose: null, camera: null,
+      isCalibrating: false, calibrationValues: [], baselineY: null, jumpArmed: true, lastJumpAt: 0,
+      smoothXRatio: 0.5, // ตัวแปรสำหรับทำ Smoothing (ไอคอนเก่าวิ่งนุ่มนวล)
+      teacherPassword: "", categoryChart: null, scoreChart: null
     };
 
-    /* =====================================================
-       DOM
-    ===================================================== */
-
+    /* --- DOM --- */
     const DOM = {
-      loginScreen: document.getElementById("loginScreen"),
-      gameScreen: document.getElementById("gameScreen"),
-      resultScreen: document.getElementById("resultScreen"),
-      dashboardScreen: document.getElementById("dashboardScreen"),
-
-      loginForm: document.getElementById("loginForm"),
-      firstName: document.getElementById("firstName"),
-      lastName: document.getElementById("lastName"),
-      studentId: document.getElementById("studentId"),
-      teacherButton: document.getElementById("teacherButton"),
-      instructionsButton:
-        document.getElementById("instructionsButton"),
-
-      playerName: document.getElementById("playerName"),
-      questionProgress:
-        document.getElementById("questionProgress"),
-      scoreText: document.getElementById("scoreText"),
-      energyText: document.getElementById("energyText"),
-      timerRing: document.getElementById("timerRing"),
-      timerText: document.getElementById("timerText"),
-      categoryText: document.getElementById("categoryText"),
-      controlModeText:
-        document.getElementById("controlModeText"),
-      questionText: document.getElementById("questionText"),
+      loginScreen: document.getElementById("loginScreen"), gameScreen: document.getElementById("gameScreen"),
+      resultScreen: document.getElementById("resultScreen"), dashboardScreen: document.getElementById("dashboardScreen"),
+      loginForm: document.getElementById("loginForm"), firstName: document.getElementById("firstName"), lastName: document.getElementById("lastName"),
+      studentId: document.getElementById("studentId"), teacherButton: document.getElementById("teacherButton"), instructionsButton: document.getElementById("instructionsButton"),
+      playerName: document.getElementById("playerName"), questionProgress: document.getElementById("questionProgress"),
+      scoreText: document.getElementById("scoreText"), energyText: document.getElementById("energyText"),
+      timerRing: document.getElementById("timerRing"), timerText: document.getElementById("timerText"),
+      categoryText: document.getElementById("categoryText"), controlModeText: document.getElementById("controlModeText"),
+      questionText: document.getElementById("questionText"), answersContainer: document.getElementById("answersContainer"),
       
-      answersContainer:
-        document.getElementById("answersContainer"),
-        
-      avatarDoll: document.getElementById("avatarDoll"),
+      playerIndicator: document.getElementById("player-indicator"), // ไอคอน Avatar กลมๆ
       jumpFlash: document.getElementById("jumpFlash"),
-
-      cameraPanel: document.getElementById("cameraPanel"),
-      cameraHandle: document.getElementById("cameraHandle"),
-      cameraVideo: document.getElementById("cameraVideo"),
-      poseCanvas: document.getElementById("poseCanvas"),
-      cameraStatus: document.getElementById("cameraStatus"),
-      toggleCameraButton:
-        document.getElementById("toggleCameraButton"),
-      closeCameraButton:
-        document.getElementById("closeCameraButton"),
-      calibrateButton:
-        document.getElementById("calibrateButton"),
-
-      feedbackOverlay:
-        document.getElementById("feedbackOverlay"),
-      feedbackSymbol:
-        document.getElementById("feedbackSymbol"),
-
-      resultIcon: document.getElementById("resultIcon"),
-      resultPlayerName:
-        document.getElementById("resultPlayerName"),
-      finalScore: document.getElementById("finalScore"),
-      finalCorrect: document.getElementById("finalCorrect"),
-      finalWrong: document.getElementById("finalWrong"),
-      finalAccuracy:
-        document.getElementById("finalAccuracy"),
-      saveStatus: document.getElementById("saveStatus"),
-      playAgainButton:
-        document.getElementById("playAgainButton"),
-      backHomeButton:
-        document.getElementById("backHomeButton"),
-
-      apiStatusDot:
-        document.getElementById("apiStatusDot"),
-      apiStatusText:
-        document.getElementById("apiStatusText"),
-
-      refreshDashboardButton:
-        document.getElementById("refreshDashboardButton"),
-      dashboardLogoutButton:
-        document.getElementById("dashboardLogoutButton"),
-      dashAttempts: document.getElementById("dashAttempts"),
-      dashStudents: document.getElementById("dashStudents"),
-      dashAverageScore:
-        document.getElementById("dashAverageScore"),
-      dashAccuracy: document.getElementById("dashAccuracy"),
-      historyTableBody:
-        document.getElementById("historyTableBody"),
-      categoryChart:
-        document.getElementById("categoryChart"),
-      scoreChart: document.getElementById("scoreChart")
+      cameraPanel: document.getElementById("cameraPanel"), cameraHandle: document.getElementById("cameraHandle"),
+      cameraVideo: document.getElementById("cameraVideo"), poseCanvas: document.getElementById("poseCanvas"),
+      cameraStatus: document.getElementById("cameraStatus"), toggleCameraButton: document.getElementById("toggleCameraButton"),
+      closeCameraButton: document.getElementById("closeCameraButton"), calibrateButton: document.getElementById("calibrateButton"),
+      feedbackOverlay: document.getElementById("feedbackOverlay"), feedbackSymbol: document.getElementById("feedbackSymbol"),
+      resultIcon: document.getElementById("resultIcon"), resultPlayerName: document.getElementById("resultPlayerName"),
+      finalScore: document.getElementById("finalScore"), finalCorrect: document.getElementById("finalCorrect"),
+      finalWrong: document.getElementById("finalWrong"), finalAccuracy: document.getElementById("finalAccuracy"),
+      saveStatus: document.getElementById("saveStatus"), playAgainButton: document.getElementById("playAgainButton"),
+      backHomeButton: document.getElementById("backHomeButton"), apiStatusDot: document.getElementById("apiStatusDot"),
+      apiStatusText: document.getElementById("apiStatusText"), refreshDashboardButton: document.getElementById("refreshDashboardButton"),
+      dashboardLogoutButton: document.getElementById("dashboardLogoutButton"), dashAttempts: document.getElementById("dashAttempts"),
+      dashStudents: document.getElementById("dashStudents"), dashAverageScore: document.getElementById("dashAverageScore"),
+      dashAccuracy: document.getElementById("dashAccuracy"), historyTableBody: document.getElementById("historyTableBody"),
+      categoryChart: document.getElementById("categoryChart"), scoreChart: document.getElementById("scoreChart")
     };
 
-    /* =====================================================
-       UTILITIES
-    ===================================================== */
-
+    /* --- UTILITIES --- */
     function showScreen(name) {
-      [
-        DOM.loginScreen,
-        DOM.gameScreen,
-        DOM.resultScreen,
-        DOM.dashboardScreen
-      ].forEach((screen) => {
-        screen.classList.remove("active");
-      });
-
-      const target = {
-        login: DOM.loginScreen,
-        game: DOM.gameScreen,
-        result: DOM.resultScreen,
-        dashboard: DOM.dashboardScreen
-      }[name];
-
+      [DOM.loginScreen, DOM.gameScreen, DOM.resultScreen, DOM.dashboardScreen].forEach((screen) => screen.classList.remove("active"));
+      const target = { login: DOM.loginScreen, game: DOM.gameScreen, result: DOM.resultScreen, dashboard: DOM.dashboardScreen }[name];
       target.classList.add("active");
-
-      if (name !== "game") {
-        clearQuestionTimer();
-      }
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      });
+      if (name !== "game") clearQuestionTimer();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-
     function shuffleArray(source) {
       const array = [...source];
-
-      for (let i = array.length - 1; i > 0; i--) {
-        const randomIndex = Math.floor(
-          Math.random() * (i + 1)
-        );
-
-        [array[i], array[randomIndex]] = [
-          array[randomIndex],
-          array[i]
-        ];
-      }
-
+      for (let i = array.length - 1; i > 0; i--) { const randomIndex = Math.floor(Math.random() * (i + 1)); [array[i], array[randomIndex]] = [array[randomIndex], array[i]]; }
       return array;
     }
-
-    function createAttemptId() {
-      const randomPart =
-        crypto?.randomUUID?.() ||
-        Math.random().toString(36).slice(2) +
-          Date.now().toString(36);
-
-      return "SMV3-" + randomPart;
-    }
-
-    function clamp(value, min, max) {
-      return Math.min(Math.max(value, min), max);
-    }
-
-    function sleep(milliseconds) {
-      return new Promise((resolve) => {
-        setTimeout(resolve, milliseconds);
-      });
-    }
-
+    function createAttemptId() { return "SMV3-" + (crypto?.randomUUID?.() || Math.random().toString(36).slice(2) + Date.now().toString(36)); }
+    function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
+    function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
     function formatThaiDate(value) {
-      if (!value) {
-        return "-";
-      }
-
-      const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return String(value);
-      }
-
-      return date.toLocaleString("th-TH", {
-        dateStyle: "short",
-        timeStyle: "short"
-      });
+      if (!value) return "-"; const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" });
     }
+    function getDeviceMode() { return `${state.cameraStarted ? "pose" : "click"}-${navigator.maxTouchPoints > 0 ? "touch" : "desktop"}`; }
 
-    function getDeviceMode() {
-      const touch = navigator.maxTouchPoints > 0;
-      const control = state.cameraStarted
-        ? "pose"
-        : "click";
-
-      return `${control}-${touch ? "touch" : "desktop"}`;
-    }
-
-    /* =====================================================
-       AUDIO
-    ===================================================== */
-
+    /* --- AUDIO --- */
     function ensureAudioContext() {
-      if (!state.audioContext) {
-        const AudioContextClass =
-          window.AudioContext ||
-          window.webkitAudioContext;
-
-        if (AudioContextClass) {
-          state.audioContext =
-            new AudioContextClass();
-        }
-      }
-
-      if (
-        state.audioContext &&
-        state.audioContext.state === "suspended"
-      ) {
-        state.audioContext.resume();
-      }
+      if (!state.audioContext) { const AudioContextClass = window.AudioContext || window.webkitAudioContext; if (AudioContextClass) state.audioContext = new AudioContextClass(); }
+      if (state.audioContext && state.audioContext.state === "suspended") state.audioContext.resume();
     }
-
     function playTone(type) {
-      ensureAudioContext();
-
-      if (!state.audioContext) {
-        return;
-      }
-
-      const context = state.audioContext;
-      const now = context.currentTime;
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-
-      oscillator.type =
-        type === "correct" ? "sine" : "sawtooth";
-
-      if (type === "correct") {
-        oscillator.frequency.setValueAtTime(520, now);
-        oscillator.frequency.exponentialRampToValueAtTime(
-          880,
-          now + 0.22
-        );
-      } else if (type === "wrong") {
-        oscillator.frequency.setValueAtTime(210, now);
-        oscillator.frequency.exponentialRampToValueAtTime(
-          110,
-          now + 0.25
-        );
-      } else {
-        oscillator.frequency.setValueAtTime(350, now);
-      }
-
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(
-        0.16,
-        now + 0.02
-      );
-      gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        now + 0.34
-      );
-
-      oscillator.start(now);
-      oscillator.stop(now + 0.36);
+      ensureAudioContext(); if (!state.audioContext) return;
+      const context = state.audioContext, now = context.currentTime, oscillator = context.createOscillator(), gain = context.createGain();
+      oscillator.connect(gain); gain.connect(context.destination);
+      oscillator.type = type === "correct" ? "sine" : "sawtooth";
+      if (type === "correct") { oscillator.frequency.setValueAtTime(520, now); oscillator.frequency.exponentialRampToValueAtTime(880, now + 0.22); }
+      else if (type === "wrong") { oscillator.frequency.setValueAtTime(210, now); oscillator.frequency.exponentialRampToValueAtTime(110, now + 0.25); }
+      else { oscillator.frequency.setValueAtTime(350, now); }
+      gain.gain.setValueAtTime(0.0001, now); gain.gain.exponentialRampToValueAtTime(0.16, now + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
+      oscillator.start(now); oscillator.stop(now + 0.36);
     }
 
-    /* =====================================================
-       GAME
-    ===================================================== */
-
+    /* --- GAME LOGIC --- */
     async function startMission(event) {
       event.preventDefault();
-
-      const firstName =
-        DOM.firstName.value.trim();
-      const lastName =
-        DOM.lastName.value.trim();
-      const studentId =
-        DOM.studentId.value.trim();
-
-      if (!firstName || !lastName) {
-        await Swal.fire({
-          icon: "warning",
-          title: "กรอกข้อมูลให้ครบ",
-          text: "กรุณากรอกชื่อและนามสกุล",
-          confirmButtonText: "ตกลง"
-        });
-
-        return;
-      }
-
+      const firstName = DOM.firstName.value.trim(), lastName = DOM.lastName.value.trim(), studentId = DOM.studentId.value.trim();
+      if (!firstName || !lastName) { await Swal.fire({ icon: "warning", title: "กรอกข้อมูลให้ครบ", text: "กรุณากรอกชื่อและนามสกุล", confirmButtonText: "ตกลง" }); return; }
       ensureAudioContext();
-
-      state.student = {
-        firstName,
-        lastName,
-        studentId
-      };
-
-      resetRound();
-      showScreen("game");
-
-      DOM.playerName.textContent =
-        `${firstName} ${lastName}`;
-
-      renderQuestion();
+      state.student = { firstName, lastName, studentId };
+      resetRound(); showScreen("game"); DOM.playerName.textContent = `${firstName} ${lastName}`; renderQuestion();
 
       const result = await Swal.fire({
-        icon: "question",
-        title: "ต้องการใช้กล้อง AI หรือไม่?",
-        html:
-          "เปิดกล้องเพื่อใช้การกระโดดเลือกคำตอบ<br>" +
-          "หรือเล่นด้วยการคลิกและสัมผัสได้",
-        showCancelButton: true,
-        confirmButtonText: "เปิดกล้อง AI",
-        cancelButtonText: "เล่นด้วยการคลิก",
-        allowOutsideClick: false
+        icon: "question", title: "ต้องการใช้กล้อง AI หรือไม่?",
+        html: "เปิดกล้องเพื่อใช้การเดินและกระโดดเลือกคำตอบ<br>หรือเล่นด้วยการคลิกบนหน้าจอได้",
+        showCancelButton: true, confirmButtonText: "เปิดกล้อง AI", cancelButtonText: "เล่นด้วยการคลิก", allowOutsideClick: false
       });
-
-      if (result.isConfirmed) {
-        await startPoseCamera();
-      }
+      if (result.isConfirmed) await startPoseCamera();
     }
 
     function resetRound() {
       clearQuestionTimer();
-
-      state.roundQuestions =
-        shuffleArray(QUESTION_BANK).slice(
-          0,
-          CONFIG.QUESTIONS_PER_ROUND
-        );
-
-      state.currentIndex = 0;
-      state.energy = CONFIG.MAX_ENERGY;
-      state.score = 0;
-      state.correct = 0;
-      state.wrong = 0;
-      state.results = [];
-      state.attemptId = createAttemptId();
-      state.roundStartedAt = Date.now();
-      state.answerLocked = false;
-      state.remainingTime =
-        CONFIG.TIME_PER_QUESTION;
-      state.jumpArmed = true;
-      state.activeZone = -1;
-
+      state.roundQuestions = shuffleArray(QUESTION_BANK).slice(0, CONFIG.QUESTIONS_PER_ROUND);
+      state.currentIndex = 0; state.energy = CONFIG.MAX_ENERGY; state.score = 0; state.correct = 0; state.wrong = 0;
+      state.results = []; state.attemptId = createAttemptId(); state.roundStartedAt = Date.now();
+      state.answerLocked = false; state.remainingTime = CONFIG.TIME_PER_QUESTION; state.jumpArmed = true; state.activeZone = -1; state.smoothXRatio = 0.5;
       updateHUD();
     }
 
     function renderQuestion() {
-      clearQuestionTimer();
-      DOM.answersContainer.replaceChildren();
+      clearQuestionTimer(); DOM.answersContainer.replaceChildren();
+      if (state.currentIndex >= state.roundQuestions.length || state.energy <= 0) { finishMission(); return; }
 
-      if (
-        state.currentIndex >=
-          state.roundQuestions.length ||
-        state.energy <= 0
-      ) {
-        finishMission();
-        return;
-      }
+      const question = state.roundQuestions[state.currentIndex];
+      state.answerLocked = false; state.remainingTime = CONFIG.TIME_PER_QUESTION; state.questionStartedAt = Date.now();
+      state.jumpArmed = true; state.activeZone = -1;
 
-      const question =
-        state.roundQuestions[state.currentIndex];
+      DOM.questionProgress.textContent = `${state.currentIndex + 1} / ${state.roundQuestions.length}`;
+      DOM.categoryText.textContent = question.category; DOM.questionText.textContent = question.question;
 
-      state.answerLocked = false;
-      state.remainingTime =
-        CONFIG.TIME_PER_QUESTION;
-      state.questionStartedAt = Date.now();
-      state.jumpArmed = true;
-      state.activeZone = -1;
+      const colors = ["#22d3ee", "#a855f7", "#f97316"];
+      question.choices.forEach((choice, index) => {
+        const button = document.createElement("button"); button.type = "button"; button.dataset.index = String(index);
+        button.className = "answer-card flex items-center gap-4 rounded-2xl p-4 text-left md:p-6";
+        button.style.setProperty("--zone-color", colors[index]);
 
-      DOM.questionProgress.textContent =
-        `${state.currentIndex + 1} / ` +
-        `${state.roundQuestions.length}`;
+        const number = document.createElement("span"); number.className = "zone-number"; number.textContent = String(index + 1);
+        const text = document.createElement("span"); text.className = "text-base font-medium leading-relaxed md:text-xl"; text.textContent = choice;
 
-      DOM.categoryText.textContent =
-        question.category;
+        button.append(number, text);
+        button.addEventListener("click", () => submitAnswer(index, "click"));
+        DOM.answersContainer.appendChild(button);
+      });
 
-      DOM.questionText.textContent =
-        question.question;
-
-      const colors = [
-        "#22d3ee",
-        "#a855f7",
-        "#f97316"
-      ];
-
-      question.choices.forEach(
-        (choice, index) => {
-          const button =
-            document.createElement("button");
-
-          button.type = "button";
-          button.dataset.index = String(index);
-          button.className =
-            "answer-card flex items-center gap-4 rounded-2xl p-4 text-left md:p-6";
-
-          button.style.setProperty(
-            "--zone-color",
-            colors[index]
-          );
-
-          const number =
-            document.createElement("span");
-
-          number.className = "zone-number";
-          number.textContent = String(index + 1);
-
-          const text =
-            document.createElement("span");
-
-          text.className =
-            "text-base font-medium leading-relaxed md:text-xl";
-
-          text.textContent = choice;
-
-          button.append(number, text);
-
-          button.addEventListener(
-            "click",
-            () => submitAnswer(index, "click")
-          );
-
-          DOM.answersContainer.appendChild(button);
-        }
-      );
-
-      updateHUD();
-      startQuestionTimer();
+      updateHUD(); startQuestionTimer();
     }
 
     function updateHUD() {
-      DOM.scoreText.textContent =
-        String(state.score);
-
-      DOM.energyText.textContent =
-        "❤️".repeat(state.energy) +
-        "🖤".repeat(
-          CONFIG.MAX_ENERGY - state.energy
-        );
-
-      DOM.controlModeText.textContent =
-        state.cameraStarted
-          ? "โหมด: AI Pose + คลิก/สัมผัส"
-          : "โหมด: คลิก/สัมผัส";
+      DOM.scoreText.textContent = String(state.score);
+      DOM.energyText.textContent = "❤️".repeat(state.energy) + "🖤".repeat(CONFIG.MAX_ENERGY - state.energy);
+      DOM.controlModeText.textContent = state.cameraStarted ? "โหมด: AI Pose + คลิก/สัมผัส" : "โหมด: คลิก/สัมผัส";
     }
 
     function startQuestionTimer() {
       updateTimerDisplay();
-
       state.timerId = setInterval(() => {
-        const elapsed =
-          (Date.now() -
-            state.questionStartedAt) /
-          1000;
-
-        state.remainingTime = Math.max(
-          0,
-          CONFIG.TIME_PER_QUESTION - elapsed
-        );
-
+        const elapsed = (Date.now() - state.questionStartedAt) / 1000;
+        state.remainingTime = Math.max(0, CONFIG.TIME_PER_QUESTION - elapsed);
         updateTimerDisplay();
-
-        if (state.remainingTime <= 0) {
-          clearQuestionTimer();
-          submitAnswer(null, "timeout");
-        }
+        if (state.remainingTime <= 0) { clearQuestionTimer(); submitAnswer(null, "timeout"); }
       }, 100);
     }
 
     function updateTimerDisplay() {
-      const seconds =
-        Math.ceil(state.remainingTime);
-
-      const progress =
-        (
-          state.remainingTime /
-          CONFIG.TIME_PER_QUESTION
-        ) * 100;
-
-      DOM.timerText.textContent =
-        String(seconds);
-
-      DOM.timerRing.style.setProperty(
-        "--progress",
-        `${progress}%`
-      );
-
-      if (seconds <= 5) {
-        DOM.timerText.style.color = "#f87171";
-      } else if (seconds <= 10) {
-        DOM.timerText.style.color = "#fde047";
-      } else {
-        DOM.timerText.style.color = "#ffffff";
-      }
+      const seconds = Math.ceil(state.remainingTime), progress = (state.remainingTime / CONFIG.TIME_PER_QUESTION) * 100;
+      DOM.timerText.textContent = String(seconds); DOM.timerRing.style.setProperty("--progress", `${progress}%`);
+      if (seconds <= 5) DOM.timerText.style.color = "#f87171"; else if (seconds <= 10) DOM.timerText.style.color = "#fde047"; else DOM.timerText.style.color = "#ffffff";
     }
 
-    function clearQuestionTimer() {
-      if (state.timerId) {
-        clearInterval(state.timerId);
-        state.timerId = null;
-      }
-    }
+    function clearQuestionTimer() { if (state.timerId) { clearInterval(state.timerId); state.timerId = null; } }
 
-    async function submitAnswer(
-      selectedIndex,
-      inputMode
-    ) {
-      if (state.answerLocked) {
-        return;
-      }
+    async function submitAnswer(selectedIndex, inputMode) {
+      if (state.answerLocked) return;
+      const question = state.roundQuestions[state.currentIndex];
+      if (!question) return;
 
-      const question =
-        state.roundQuestions[state.currentIndex];
+      state.answerLocked = true; clearQuestionTimer();
+      const timeUsed = Math.min(CONFIG.TIME_PER_QUESTION, Math.max(0, (Date.now() - state.questionStartedAt) / 1000));
+      const isCorrect = selectedIndex === question.correctIndex;
 
-      if (!question) {
-        return;
-      }
+      const buttons = [...DOM.answersContainer.querySelectorAll(".answer-card")];
+      buttons.forEach((button) => { button.disabled = true; });
+      if (selectedIndex !== null && buttons[selectedIndex]) buttons[selectedIndex].classList.add(isCorrect ? "correct" : "wrong");
+      if (buttons[question.correctIndex]) buttons[question.correctIndex].classList.add("correct");
 
-      state.answerLocked = true;
-      clearQuestionTimer();
-
-      const timeUsed = Math.min(
-        CONFIG.TIME_PER_QUESTION,
-        Math.max(
-          0,
-          (
-            Date.now() -
-            state.questionStartedAt
-          ) / 1000
-        )
-      );
-
-      const isCorrect =
-        selectedIndex === question.correctIndex;
-
-      const buttons = [
-        ...DOM.answersContainer.querySelectorAll(
-          ".answer-card"
-        )
-      ];
-
-      buttons.forEach((button) => {
-        button.disabled = true;
-      });
-
-      if (
-        selectedIndex !== null &&
-        buttons[selectedIndex]
-      ) {
-        buttons[selectedIndex].classList.add(
-          isCorrect ? "correct" : "wrong"
-        );
-      }
-
-      if (buttons[question.correctIndex]) {
-        buttons[
-          question.correctIndex
-        ].classList.add("correct");
-      }
-
-      if (isCorrect) {
-        state.score +=
-          CONFIG.SCORE_PER_QUESTION;
-        state.correct++;
-        playTone("correct");
-        showFeedback(true);
-      } else {
-        state.energy = Math.max(
-          0,
-          state.energy - 1
-        );
-
-        state.wrong++;
-        playTone("wrong");
-        showFeedback(false);
-      }
+      if (isCorrect) { state.score += CONFIG.SCORE_PER_QUESTION; state.correct++; playTone("correct"); showFeedback(true); } 
+      else { state.energy = Math.max(0, state.energy - 1); state.wrong++; playTone("wrong"); showFeedback(false); }
 
       state.results.push({
-        questionId: question.id,
-        category: question.category,
-        question: question.question,
-
-        studentAnswer:
-          selectedIndex === null
-            ? "หมดเวลา"
-            : question.choices[selectedIndex],
-
-        correctAnswer:
-          question.choices[
-            question.correctIndex
-          ],
-
-        result: isCorrect
-          ? "correct"
-          : "wrong",
-
-        score: isCorrect
-          ? CONFIG.SCORE_PER_QUESTION
-          : 0,
-
-        timeUsed:
-          Number(timeUsed.toFixed(2)),
-
-        questionOrder:
-          state.currentIndex + 1,
-
-        inputMode
+        questionId: question.id, category: question.category, question: question.question,
+        studentAnswer: selectedIndex === null ? "หมดเวลา" : question.choices[selectedIndex],
+        correctAnswer: question.choices[question.correctIndex], result: isCorrect ? "correct" : "wrong",
+        score: isCorrect ? CONFIG.SCORE_PER_QUESTION : 0, timeUsed: Number(timeUsed.toFixed(2)), questionOrder: state.currentIndex + 1, inputMode
       });
 
-      updateHUD();
+      updateHUD(); await sleep(CONFIG.FEEDBACK_DELAY);
+      hideFeedback(); DOM.answersContainer.replaceChildren(); state.currentIndex++;
 
-      await sleep(CONFIG.FEEDBACK_DELAY);
-
-      hideFeedback();
-      DOM.answersContainer.replaceChildren();
-
-      state.currentIndex++;
-
-      if (
-        state.currentIndex >=
-          state.roundQuestions.length ||
-        state.energy <= 0
-      ) {
-        finishMission();
-      } else {
-        renderQuestion();
-      }
+      if (state.currentIndex >= state.roundQuestions.length || state.energy <= 0) finishMission(); else renderQuestion();
     }
 
     function showFeedback(isCorrect) {
-      DOM.feedbackSymbol.textContent =
-        isCorrect ? "✓" : "✕";
-
-      DOM.feedbackSymbol.style.color =
-        isCorrect ? "#4ade80" : "#f87171";
-
+      DOM.feedbackSymbol.textContent = isCorrect ? "✓" : "✕";
+      DOM.feedbackSymbol.style.color = isCorrect ? "#4ade80" : "#f87171";
       DOM.feedbackOverlay.classList.add("show");
     }
-
-    function hideFeedback() {
-      DOM.feedbackOverlay.classList.remove("show");
-    }
+    function hideFeedback() { DOM.feedbackOverlay.classList.remove("show"); }
 
     async function finishMission() {
-      clearQuestionTimer();
-      state.answerLocked = true;
+      clearQuestionTimer(); state.answerLocked = true; showScreen("result");
+      const answeredCount = state.results.length, accuracy = answeredCount > 0 ? Number((state.correct / answeredCount * 100).toFixed(2)) : 0;
+      const totalTime = Number(((Date.now() - state.roundStartedAt) / 1000).toFixed(2));
 
-      showScreen("result");
+      DOM.resultPlayerName.textContent = `${state.student.firstName} ${state.student.lastName}`;
+      DOM.finalScore.textContent = String(state.score); DOM.finalCorrect.textContent = String(state.correct);
+      DOM.finalWrong.textContent = String(state.wrong); DOM.finalAccuracy.textContent = `${accuracy}%`;
+      DOM.resultIcon.textContent = state.score >= 80 ? "🏆" : state.score >= 60 ? "🌟" : "🚀";
 
-      const answeredCount =
-        state.results.length;
-
-      const accuracy =
-        answeredCount > 0
-          ? Number(
-              (
-                state.correct /
-                answeredCount *
-                100
-              ).toFixed(2)
-            )
-          : 0;
-
-      const totalTime = Number(
-        (
-          (Date.now() -
-            state.roundStartedAt) /
-          1000
-        ).toFixed(2)
-      );
-
-      DOM.resultPlayerName.textContent =
-        `${state.student.firstName} ` +
-        `${state.student.lastName}`;
-
-      DOM.finalScore.textContent =
-        String(state.score);
-
-      DOM.finalCorrect.textContent =
-        String(state.correct);
-
-      DOM.finalWrong.textContent =
-        String(state.wrong);
-
-      DOM.finalAccuracy.textContent =
-        `${accuracy}%`;
-
-      DOM.resultIcon.textContent =
-        state.score >= 80
-          ? "🏆"
-          : state.score >= 60
-            ? "🌟"
-            : "🚀";
-
-      DOM.saveStatus.textContent =
-        "กำลังบันทึกผลลงฐานข้อมูล...";
-
-      DOM.saveStatus.className =
-        "mt-5 rounded-xl bg-cyan-950/50 px-4 py-3 text-sm text-cyan-200";
+      DOM.saveStatus.textContent = "กำลังบันทึกผลลงฐานข้อมูล..."; DOM.saveStatus.className = "mt-5 rounded-xl bg-cyan-950/50 px-4 py-3 text-sm text-cyan-200";
 
       const payload = {
-        action: "saveAttempt",
-        attemptId: state.attemptId,
-
-        student: {
-          studentId:
-            state.student.studentId,
-          firstName:
-            state.student.firstName,
-          lastName:
-            state.student.lastName
-        },
-
-        summary: {
-          score: state.score,
-          correct: state.correct,
-          wrong: state.wrong,
-          accuracy,
-          totalTime,
-          questionCount: answeredCount,
-          deviceMode: getDeviceMode(),
-          missionLevel:
-            "SCIENCE MISSION V3"
-        },
-
+        action: "saveAttempt", attemptId: state.attemptId,
+        student: { studentId: state.student.studentId, firstName: state.student.firstName, lastName: state.student.lastName },
+        summary: { score: state.score, correct: state.correct, wrong: state.wrong, accuracy, totalTime, questionCount: answeredCount, deviceMode: getDeviceMode(), missionLevel: "SCIENCE MISSION V3" },
         questions: state.results
       };
 
       try {
-        const response =
-          await callAPI(payload);
-
-        if (!response.success) {
-          throw new Error(
-            response.message ||
-            "บันทึกข้อมูลไม่สำเร็จ"
-          );
-        }
-
-        localStorage.removeItem(
-          CONFIG.PENDING_STORAGE_KEY
-        );
-
-        DOM.saveStatus.textContent =
-          response.duplicate
-            ? "ข้อมูลรอบนี้มีอยู่ในระบบแล้ว"
-            : "✅ บันทึกผลลง Google Sheets สำเร็จ";
-
-        DOM.saveStatus.className =
-          "mt-5 rounded-xl bg-green-950/50 px-4 py-3 text-sm text-green-300";
+        const response = await callAPI(payload);
+        if (!response.success) throw new Error(response.message || "บันทึกข้อมูลไม่สำเร็จ");
+        localStorage.removeItem(CONFIG.PENDING_STORAGE_KEY);
+        DOM.saveStatus.textContent = response.duplicate ? "ข้อมูลรอบนี้มีอยู่ในระบบแล้ว" : "✅ บันทึกผลลง Google Sheets สำเร็จ";
+        DOM.saveStatus.className = "mt-5 rounded-xl bg-green-950/50 px-4 py-3 text-sm text-green-300";
       } catch (error) {
-        localStorage.setItem(
-          CONFIG.PENDING_STORAGE_KEY,
-          JSON.stringify(payload)
-        );
-
-        DOM.saveStatus.textContent =
-          "⚠️ ยังส่งข้อมูลไม่ได้ ระบบเก็บผลไว้ในอุปกรณ์และจะลองส่งใหม่ภายหลัง";
-
-        DOM.saveStatus.className =
-          "mt-5 rounded-xl bg-amber-950/50 px-4 py-3 text-sm text-amber-300";
-
+        localStorage.setItem(CONFIG.PENDING_STORAGE_KEY, JSON.stringify(payload));
+        DOM.saveStatus.textContent = "⚠️ ยังส่งข้อมูลไม่ได้ ระบบเก็บผลไว้ในอุปกรณ์และจะลองส่งใหม่ภายหลัง";
+        DOM.saveStatus.className = "mt-5 rounded-xl bg-amber-950/50 px-4 py-3 text-sm text-amber-300";
         console.error(error);
       }
     }
 
-    /* =====================================================
-       API
-    ===================================================== */
-
+    /* --- API --- */
     async function callAPI(payload) {
-      const controller =
-        new AbortController();
-
-      const timeoutId = setTimeout(
-        () => controller.abort(),
-        CONFIG.API_TIMEOUT
-      );
-
+      const controller = new AbortController(), timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT);
       try {
-        const response = await fetch(
-          CONFIG.API_URL,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "text/plain;charset=utf-8"
-            },
-            body: JSON.stringify(payload),
-            signal: controller.signal,
-            redirect: "follow"
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `HTTP ${response.status}`
-          );
-        }
-
-        const responseText =
-          await response.text();
-
-        try {
-          return JSON.parse(responseText);
-        } catch {
-          throw new Error(
-            "API ไม่ได้ส่งข้อมูล JSON กลับมา"
-          );
-        }
-      } finally {
-        clearTimeout(timeoutId);
-      }
+        const response = await fetch(CONFIG.API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), signal: controller.signal, redirect: "follow" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const responseText = await response.text();
+        try { return JSON.parse(responseText); } catch { throw new Error("API ไม่ได้ส่งข้อมูล JSON กลับมา"); }
+      } finally { clearTimeout(timeoutId); }
     }
 
     async function checkAPIStatus() {
       try {
-        const response = await fetch(
-          CONFIG.API_URL,
-          {
-            method: "GET",
-            redirect: "follow"
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("API offline");
-        }
-
+        const response = await fetch(CONFIG.API_URL, { method: "GET", redirect: "follow" });
+        if (!response.ok) throw new Error("API offline");
         const text = await response.text();
-
-        if (
-          !text.includes("SCIENCE MISSION API")
-        ) {
-          throw new Error(
-            "Unexpected API response"
-          );
-        }
-
-        DOM.apiStatusDot.classList.add(
-          "online"
-        );
-
-        DOM.apiStatusDot.classList.remove(
-          "offline"
-        );
-
-        DOM.apiStatusText.textContent =
-          "ระบบบันทึกข้อมูลพร้อมใช้งาน";
-
-        retryPendingAttempt();
+        if (!text.includes("SCIENCE MISSION API")) throw new Error("Unexpected API response");
+        DOM.apiStatusDot.classList.add("online"); DOM.apiStatusDot.classList.remove("offline");
+        DOM.apiStatusText.textContent = "ระบบบันทึกข้อมูลพร้อมใช้งาน"; retryPendingAttempt();
       } catch (error) {
-        DOM.apiStatusDot.classList.add(
-          "offline"
-        );
-
-        DOM.apiStatusDot.classList.remove(
-          "online"
-        );
-
-        DOM.apiStatusText.textContent =
-          "ไม่สามารถเชื่อมต่อระบบบันทึกข้อมูล";
+        DOM.apiStatusDot.classList.add("offline"); DOM.apiStatusDot.classList.remove("online");
+        DOM.apiStatusText.textContent = "ไม่สามารถเชื่อมต่อระบบบันทึกข้อมูล";
       }
     }
 
     async function retryPendingAttempt() {
-      const rawPayload =
-        localStorage.getItem(
-          CONFIG.PENDING_STORAGE_KEY
-        );
-
-      if (!rawPayload) {
-        return;
-      }
-
-      try {
-        const payload =
-          JSON.parse(rawPayload);
-
-        const response =
-          await callAPI(payload);
-
-        if (response.success) {
-          localStorage.removeItem(
-            CONFIG.PENDING_STORAGE_KEY
-          );
-        }
-      } catch (error) {
-        console.warn(
-          "Pending retry failed:",
-          error
-        );
-      }
+      const rawPayload = localStorage.getItem(CONFIG.PENDING_STORAGE_KEY); if (!rawPayload) return;
+      try { const payload = JSON.parse(rawPayload); const response = await callAPI(payload); if (response.success) localStorage.removeItem(CONFIG.PENDING_STORAGE_KEY); } catch (error) { console.warn("Pending retry failed:", error); }
     }
 
-    /* =====================================================
-       MEDIAPIPE POSE
-    ===================================================== */
-
+    /* --- MEDIAPIPE POSE --- */
     async function startPoseCamera() {
-      if (state.cameraStarted) {
-        showCameraPanel();
-        return;
-      }
+      if (state.cameraStarted) { showCameraPanel(); return; }
+      if (!navigator.mediaDevices?.getUserMedia) { showCameraError("อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับกล้อง"); return; }
+      if (!window.Pose || !window.Camera) { showCameraError("ไม่สามารถโหลดระบบ MediaPipe Pose ได้"); return; }
 
-      if (
-        !navigator.mediaDevices?.getUserMedia
-      ) {
-        showCameraError(
-          "อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับกล้อง"
-        );
-
-        return;
-      }
-
-      if (!window.Pose || !window.Camera) {
-        showCameraError(
-          "ไม่สามารถโหลดระบบ MediaPipe Pose ได้"
-        );
-
-        return;
-      }
-
-      showCameraPanel();
-
-      DOM.cameraStatus.textContent =
-        "กำลังเปิดกล้อง...";
+      showCameraPanel(); DOM.cameraStatus.textContent = "กำลังเปิดกล้อง...";
 
       try {
-        state.pose = new Pose({
-          locateFile: (file) =>
-            "https://cdn.jsdelivr.net/npm/" +
-            `@mediapipe/pose/${file}`
-        });
+        state.pose = new Pose({ locateFile: (file) => "https://cdn.jsdelivr.net/npm/" + `@mediapipe/pose/${file}` });
+        state.pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, enableSegmentation: false, minDetectionConfidence: 0.55, minTrackingConfidence: 0.55 });
+        state.pose.onResults(handlePoseResults);
 
-        state.pose.setOptions({
-          modelComplexity: 1,
-          smoothLandmarks: true,
-          enableSegmentation: false,
-          minDetectionConfidence: 0.55,
-          minTrackingConfidence: 0.55
-        });
-
-        state.pose.onResults(
-          handlePoseResults
-        );
-
-        state.camera = new Camera(
-          DOM.cameraVideo,
-          {
-            onFrame: async () => {
-              if (state.pose) {
-                await state.pose.send({
-                  image: DOM.cameraVideo
-                });
-              }
-            },
-            width: 640,
-            height: 480
-          }
-        );
-
+        state.camera = new Camera(DOM.cameraVideo, { onFrame: async () => { if (state.pose) { await state.pose.send({ image: DOM.cameraVideo }); } }, width: 640, height: 480 });
         await state.camera.start();
-
-        state.cameraStarted = true;
-
-        DOM.cameraStatus.textContent =
-          "ตรวจพบกล้องแล้ว";
-
-        updateHUD();
-
-        await sleep(700);
-        startCalibration();
+        state.cameraStarted = true; DOM.cameraStatus.textContent = "ตรวจพบกล้องแล้ว"; updateHUD();
+        await sleep(700); startCalibration();
       } catch (error) {
-        console.error(error);
-
-        state.cameraStarted = false;
-
-        DOM.cameraStatus.textContent =
-          "เปิดกล้องไม่สำเร็จ";
-
-        updateHUD();
-
-        showCameraError(
-          "กรุณาอนุญาตการใช้กล้อง และเปิดเว็บผ่าน HTTPS หรือ localhost"
-        );
+        console.error(error); state.cameraStarted = false; DOM.cameraStatus.textContent = "เปิดกล้องไม่สำเร็จ"; updateHUD();
+        showCameraError("กรุณาอนุญาตการใช้กล้อง และเปิดเว็บผ่าน HTTPS หรือ localhost");
       }
     }
 
     function handlePoseResults(results) {
-      const canvas = DOM.poseCanvas;
-      const context =
-        canvas.getContext("2d");
+      const canvas = DOM.poseCanvas, context = canvas.getContext("2d");
+      context.save(); context.clearRect(0, 0, canvas.width, canvas.height);
+      if (results.image) context.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-      context.save();
-      context.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      if (results.image) {
-        context.drawImage(
-          results.image,
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
-      }
-
-      const landmarks =
-        results.poseLandmarks;
-
+      const landmarks = results.poseLandmarks;
       if (!landmarks) {
-        DOM.cameraStatus.textContent =
-          "ไม่พบร่างกาย กรุณาถอยจากกล้อง";
-
-        context.restore();
-        return;
+        DOM.cameraStatus.textContent = "ไม่พบร่างกาย กรุณาถอยจากกล้อง";
+        if (DOM.playerIndicator) DOM.playerIndicator.style.display = 'none';
+        context.restore(); return;
       }
 
-      if (
-        window.drawConnectors &&
-        window.POSE_CONNECTIONS
-      ) {
-        drawConnectors(
-          context,
-          landmarks,
-          POSE_CONNECTIONS,
-          {
-            color: "#22d3ee",
-            lineWidth: 3
-          }
-        );
-
-        drawLandmarks(
-          context,
-          landmarks,
-          {
-            color: "#f8fafc",
-            fillColor: "#a855f7",
-            lineWidth: 1,
-            radius: 3
-          }
-        );
+      if (window.drawConnectors && window.POSE_CONNECTIONS) {
+        drawConnectors(context, landmarks, POSE_CONNECTIONS, { color: "#22d3ee", lineWidth: 3 });
+        drawLandmarks(context, landmarks, { color: "#f8fafc", fillColor: "#a855f7", lineWidth: 1, radius: 3 });
       }
-
       context.restore();
-
       processPoseLandmarks(landmarks);
     }
 
-    function processPoseLandmarks(
-      landmarks
-    ) {
-      const leftShoulder = landmarks[11];
-      const rightShoulder = landmarks[12];
-      const leftHip = landmarks[23];
-      const rightHip = landmarks[24];
-
-      const required = [
-        leftShoulder,
-        rightShoulder,
-        leftHip,
-        rightHip
-      ];
-
-      const visible = required.every(
-        (point) =>
-          point &&
-          (point.visibility ?? 1) > 0.45
-      );
-
+    function processPoseLandmarks(landmarks) {
+      const leftShoulder = landmarks[11], rightShoulder = landmarks[12];
+      const required = [leftShoulder, rightShoulder];
+      const visible = required.every((point) => point && (point.visibility ?? 1) > 0.45);
       if (!visible) {
-        DOM.cameraStatus.textContent =
-          "กรุณาให้เห็นไหล่และสะโพก";
-
-        return;
+          DOM.cameraStatus.textContent = "กรุณาให้เห็นช่วงไหล่";
+          if (DOM.playerIndicator) DOM.playerIndicator.style.display = 'none';
+          return;
       }
 
-      const bodyCenterX =
-        (
-          leftShoulder.x +
-          rightShoulder.x +
-          leftHip.x +
-          rightHip.x
-        ) / 4;
-
-      const hipY =
-        (leftHip.y + rightHip.y) / 2;
-
-      const mirroredX = clamp(
-        1 - bodyCenterX,
-        0,
-        0.999
-      );
+      // 1. คำนวณแกน X และจำลองความสมูท (Smoothing) ตามสไตล์โค้ดเก่า
+      const bodyCenterX = (leftShoulder.x + rightShoulder.x) / 2;
+      const mirroredX = clamp(1 - bodyCenterX, 0, 0.999);
       
-      if (DOM.avatarDoll) {
-        DOM.avatarDoll.style.left = `${mirroredX * 100}%`;
+      state.smoothXRatio = (state.smoothXRatio * 0.8) + (mirroredX * 0.2); // เกลี่ยให้เคลื่อนที่นุ่มนวล
+      const percentX = Math.max(0, Math.min(100, state.smoothXRatio * 100));
+
+      if (DOM.playerIndicator && !state.answerLocked && DOM.gameScreen.classList.contains("active")) {
+        DOM.playerIndicator.style.display = 'flex';
+        DOM.playerIndicator.style.left = `${percentX}%`;
+      } else if (DOM.playerIndicator) {
+        DOM.playerIndicator.style.display = 'none';
       }
 
-      const zone =
-        Math.floor(mirroredX * 3);
-
+      // 2. แบ่งโซนตามการคำนวณแบบเก่า (<33% ซ้าย, >66% ขวา)
+      let zone = 1;
+      if (state.smoothXRatio < 0.33) zone = 0;
+      else if (state.smoothXRatio > 0.66) zone = 2;
+      
       highlightZone(zone);
 
-      if (state.isCalibrating) {
-        state.calibrationValues.push(hipY);
+      // 3. คำนวณการกระโดดแกน Y (ใช้หัวไหล่)
+      const currentY = (leftShoulder.y + rightShoulder.y) / 2;
 
-        DOM.cameraStatus.textContent =
-          "กำลังปรับเทียบ กรุณายืนนิ่ง";
+      if (state.isCalibrating) { state.calibrationValues.push(currentY); DOM.cameraStatus.textContent = "กำลังปรับเทียบ กรุณายืนนิ่ง"; return; }
+      if (state.baselineY === null) { DOM.cameraStatus.textContent = "กด 🎯 เพื่อปรับเทียบ"; return; }
 
-        return;
-      }
-
-      if (state.baselineHipY === null) {
-        DOM.cameraStatus.textContent =
-          "กด 🎯 เพื่อปรับเทียบ";
-
-        return;
-      }
-
-      const jumpHeight =
-        state.baselineHipY - hipY;
-
-      if (
-        jumpHeight <
-        CONFIG.JUMP_RESET_THRESHOLD
-      ) {
-        state.jumpArmed = true;
-
-        state.baselineHipY =
-          state.baselineHipY * 0.985 +
-          hipY * 0.015;
+      const jumpHeight = state.baselineY - currentY;
+      if (jumpHeight < CONFIG.JUMP_RESET_THRESHOLD) {
+        state.jumpArmed = true; state.baselineY = state.baselineY * 0.985 + currentY * 0.015; // Low pass กรองการเดิน
       }
 
       const now = Date.now();
+      const canTrigger = state.jumpArmed && !state.answerLocked && DOM.gameScreen.classList.contains("active") && now - state.lastJumpAt > CONFIG.JUMP_COOLDOWN;
 
-      const canTrigger =
-        state.jumpArmed &&
-        !state.answerLocked &&
-        DOM.gameScreen.classList.contains(
-          "active"
-        ) &&
-        now - state.lastJumpAt >
-          CONFIG.JUMP_COOLDOWN;
-
-      if (
-        canTrigger &&
-        jumpHeight >=
-          CONFIG.JUMP_THRESHOLD
-      ) {
-        state.jumpArmed = false;
-        state.lastJumpAt = now;
+      if (canTrigger && jumpHeight >= CONFIG.JUMP_THRESHOLD) {
+        state.jumpArmed = false; state.lastJumpAt = now;
         
-        if (DOM.avatarDoll) {
-          DOM.avatarDoll.classList.add("jumping");
-          setTimeout(() => DOM.avatarDoll.classList.remove("jumping"), 300);
+        // Jump Effects (Avatar วาบสีม่วงเด้งขึ้น + จอกระพริบ)
+        if (DOM.playerIndicator) {
+          DOM.playerIndicator.classList.add("jumping");
+          setTimeout(() => DOM.playerIndicator.classList.remove("jumping"), 300);
         }
         if (DOM.jumpFlash) {
           DOM.jumpFlash.classList.add("flash");
           setTimeout(() => DOM.jumpFlash.classList.remove("flash"), 50);
         }
 
-        DOM.cameraStatus.textContent =
-          `เลือกคำตอบ ${zone + 1}`;
-
+        DOM.cameraStatus.textContent = `เลือกคำตอบ ${zone + 1}`;
         submitAnswer(zone, "pose");
       } else {
-        DOM.cameraStatus.textContent =
-          `โซน ${zone + 1} — กระโดดเพื่อยืนยัน`;
+        DOM.cameraStatus.textContent = `โซน ${zone + 1} — กระโดดเพื่อยืนยัน`;
       }
     }
 
     function highlightZone(zoneIndex) {
       state.activeZone = zoneIndex;
-
-      const buttons = [
-        ...DOM.answersContainer.querySelectorAll(
-          ".answer-card"
-        )
-      ];
-
-      buttons.forEach((button, index) => {
-        button.classList.toggle(
-          "zone-active",
-          index === zoneIndex &&
-          !state.answerLocked
-        );
-      });
+      const buttons = [...DOM.answersContainer.querySelectorAll(".answer-card")];
+      buttons.forEach((button, index) => { button.classList.toggle("zone-active", index === zoneIndex && !state.answerLocked); });
     }
 
     async function startCalibration() {
-      if (
-        !state.cameraStarted ||
-        state.isCalibrating
-      ) {
-        return;
-      }
-
-      state.isCalibrating = true;
-      state.calibrationValues = [];
-      state.baselineHipY = null;
-
-      DOM.cameraStatus.textContent =
-        "กำลังปรับเทียบ กรุณายืนนิ่ง";
-
-      await sleep(
-        CONFIG.CALIBRATION_TIME
-      );
-
+      if (!state.cameraStarted || state.isCalibrating) return;
+      state.isCalibrating = true; state.calibrationValues = []; state.baselineY = null;
+      DOM.cameraStatus.textContent = "กำลังปรับเทียบ กรุณายืนนิ่ง";
+      await sleep(CONFIG.CALIBRATION_TIME);
       state.isCalibrating = false;
-
-      if (
-        state.calibrationValues.length < 8
-      ) {
-        DOM.cameraStatus.textContent =
-          "ปรับเทียบไม่สำเร็จ กด 🎯 เพื่อลองใหม่";
-
-        Swal.fire({
-          icon: "warning",
-          title: "ปรับเทียบไม่สำเร็จ",
-          text:
-            "กรุณาถอยให้เห็นศีรษะ ไหล่ และสะโพก แล้วลองอีกครั้ง",
-          confirmButtonText: "ตกลง"
-        });
-
-        return;
+      if (state.calibrationValues.length < 8) {
+        DOM.cameraStatus.textContent = "ปรับเทียบไม่สำเร็จ กด 🎯 เพื่อลองใหม่";
+        Swal.fire({ icon: "warning", title: "ปรับเทียบไม่สำเร็จ", text: "กรุณาถอยให้กล้องเห็นช่วงไหล่ชัดเจน แล้วลองอีกครั้ง", confirmButtonText: "ตกลง" }); return;
       }
-
-      const values = [
-        ...state.calibrationValues
-      ].sort((a, b) => a - b);
-
-      const middle =
-        Math.floor(values.length / 2);
-
-      state.baselineHipY =
-        values.length % 2 === 0
-          ? (
-              values[middle - 1] +
-              values[middle]
-            ) / 2
-          : values[middle];
-
+      const values = [...state.calibrationValues].sort((a, b) => a - b);
+      const middle = Math.floor(values.length / 2);
+      state.baselineY = values.length % 2 === 0 ? (values[middle - 1] + values[middle]) / 2 : values[middle];
       state.jumpArmed = true;
-
-      DOM.cameraStatus.textContent =
-        "พร้อมใช้งาน เลือกโซนแล้วกระโดด";
-
-      playTone("ready");
-
-      Swal.fire({
-        icon: "success",
-        title: "AI พร้อมใช้งาน",
-        text:
-          "เดินสลับซ้าย-กลาง-ขวา เพื่อเลือกโซน แล้วกระโดดเพื่อเลือกคำตอบ",
-        timer: 2000,
-        showConfirmButton: false
-      });
+      DOM.cameraStatus.textContent = "พร้อมใช้งาน เลือกโซนแล้วกระโดด"; playTone("ready");
+      Swal.fire({ icon: "success", title: "AI พร้อมใช้งาน", text: "เดินสลับซ้าย-กลาง-ขวา เพื่อเลือกโซน แล้วกระโดดเพื่อเลือกคำตอบ", timer: 2000, showConfirmButton: false });
     }
 
-    function showCameraPanel() {
-      state.cameraVisible = true;
+    function showCameraPanel() { state.cameraVisible = true; DOM.cameraPanel.classList.remove("hidden-panel"); }
+    function hideCameraPanel() { state.cameraVisible = false; DOM.cameraPanel.classList.add("hidden-panel"); }
+    function showCameraError(message) { Swal.fire({ icon: "error", title: "ไม่สามารถใช้กล้อง AI", text: message, footer: "ยังสามารถเล่นด้วยการคลิกหรือสัมผัสคำตอบได้", confirmButtonText: "เล่นด้วยการคลิก" }); }
 
-      DOM.cameraPanel.classList.remove(
-        "hidden-panel"
-      );
-    }
-
-    function hideCameraPanel() {
-      state.cameraVisible = false;
-
-      DOM.cameraPanel.classList.add(
-        "hidden-panel"
-      );
-    }
-
-    function showCameraError(message) {
-      Swal.fire({
-        icon: "error",
-        title: "ไม่สามารถใช้กล้อง AI",
-        text: message,
-        footer:
-          "ยังสามารถเล่นด้วยการคลิกหรือสัมผัสคำตอบได้",
-        confirmButtonText: "เล่นด้วยการคลิก"
-      });
-    }
-
-    /* =====================================================
-       CAMERA DRAG
-    ===================================================== */
-
+    /* --- CAMERA DRAG --- */
     function setupCameraDrag() {
-      let dragging = false;
-      let offsetX = 0;
-      let offsetY = 0;
-
-      DOM.cameraHandle.addEventListener(
-        "pointerdown",
-        (event) => {
-          if (event.target.closest("button")) {
-            return;
-          }
-
-          dragging = true;
-
-          const rect =
-            DOM.cameraPanel.getBoundingClientRect();
-
-          offsetX =
-            event.clientX - rect.left;
-
-          offsetY =
-            event.clientY - rect.top;
-
-          DOM.cameraHandle.setPointerCapture(
-            event.pointerId
-          );
-        }
-      );
-
-      DOM.cameraHandle.addEventListener(
-        "pointermove",
-        (event) => {
-          if (!dragging) {
-            return;
-          }
-
-          const rect =
-            DOM.cameraPanel.getBoundingClientRect();
-
-          const left = clamp(
-            event.clientX - offsetX,
-            0,
-            window.innerWidth - rect.width
-          );
-
-          const top = clamp(
-            event.clientY - offsetY,
-            0,
-            window.innerHeight - rect.height
-          );
-
-          DOM.cameraPanel.style.left =
-            `${left}px`;
-
-          DOM.cameraPanel.style.top =
-            `${top}px`;
-
-          DOM.cameraPanel.style.right =
-            "auto";
-
-          DOM.cameraPanel.style.bottom =
-            "auto";
-        }
-      );
-
-      const stopDragging = () => {
-        dragging = false;
-      };
-
-      DOM.cameraHandle.addEventListener(
-        "pointerup",
-        stopDragging
-      );
-
-      DOM.cameraHandle.addEventListener(
-        "pointercancel",
-        stopDragging
-      );
+      let dragging = false; let offsetX = 0; let offsetY = 0;
+      DOM.cameraHandle.addEventListener("pointerdown", (event) => {
+        if (event.target.closest("button")) return;
+        dragging = true; const rect = DOM.cameraPanel.getBoundingClientRect();
+        offsetX = event.clientX - rect.left; offsetY = event.clientY - rect.top;
+        DOM.cameraHandle.setPointerCapture(event.pointerId);
+      });
+      DOM.cameraHandle.addEventListener("pointermove", (event) => {
+        if (!dragging) return; const rect = DOM.cameraPanel.getBoundingClientRect();
+        const left = clamp(event.clientX - offsetX, 0, window.innerWidth - rect.width);
+        const top = clamp(event.clientY - offsetY, 0, window.innerHeight - rect.height);
+        DOM.cameraPanel.style.left = `${left}px`; DOM.cameraPanel.style.top = `${top}px`;
+        DOM.cameraPanel.style.right = "auto"; DOM.cameraPanel.style.bottom = "auto";
+      });
+      const stopDragging = () => { dragging = false; };
+      DOM.cameraHandle.addEventListener("pointerup", stopDragging); DOM.cameraHandle.addEventListener("pointercancel", stopDragging);
     }
 
-    /* =====================================================
-       TEACHER DASHBOARD
-    ===================================================== */
-
+    /* --- TEACHER DASHBOARD --- */
     async function teacherLogin() {
       const result = await Swal.fire({
-        title: "เข้าสู่ระบบครูผู้สอน",
-        input: "password",
-        inputLabel: "รหัสผ่าน",
-        inputPlaceholder:
-          "กรอกรหัสผ่านครู",
-        showCancelButton: true,
-        confirmButtonText: "เข้าสู่ระบบ",
-        cancelButtonText: "ยกเลิก",
-        showLoaderOnConfirm: true,
-        allowOutsideClick: () =>
-          !Swal.isLoading(),
-
+        title: "เข้าสู่ระบบครูผู้สอน", input: "password", inputLabel: "รหัสผ่าน", inputPlaceholder: "กรอกรหัสผ่านครู",
+        showCancelButton: true, confirmButtonText: "เข้าสู่ระบบ", cancelButtonText: "ยกเลิก", showLoaderOnConfirm: true, allowOutsideClick: () => !Swal.isLoading(),
         preConfirm: async (password) => {
-          if (!password) {
-            Swal.showValidationMessage(
-              "กรุณากรอกรหัสผ่าน"
-            );
-
-            return false;
-          }
-
-          try {
-            const response =
-              await callAPI({
-                action: "teacherLogin",
-                password
-              });
-
-            if (!response.success) {
-              throw new Error(
-                response.message ||
-                "รหัสผ่านไม่ถูกต้อง"
-              );
-            }
-
-            return { password };
-          } catch (error) {
-            Swal.showValidationMessage(
-              error.message ||
-              "ไม่สามารถเข้าสู่ระบบได้"
-            );
-
-            return false;
-          }
+          if (!password) { Swal.showValidationMessage("กรุณากรอกรหัสผ่าน"); return false; }
+          try { const response = await callAPI({ action: "teacherLogin", password }); if (!response.success) throw new Error(response.message || "รหัสผ่านไม่ถูกต้อง"); return { password }; } 
+          catch (error) { Swal.showValidationMessage(error.message || "ไม่สามารถเข้าสู่ระบบได้"); return false; }
         }
       });
-
-      if (
-        !result.isConfirmed ||
-        !result.value
-      ) {
-        return;
-      }
-
-      state.teacherPassword =
-        result.value.password;
-
-      showScreen("dashboard");
-      loadDashboard();
+      if (!result.isConfirmed || !result.value) return;
+      state.teacherPassword = result.value.password; showScreen("dashboard"); loadDashboard();
     }
 
     async function loadDashboard() {
-      Swal.fire({
-        title: "กำลังโหลดข้อมูล",
-        text: "กรุณารอสักครู่",
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-      });
-
-      try {
-        const response =
-          await callAPI({
-            action: "getDashboardData",
-            password:
-              state.teacherPassword
-          });
-
-        if (!response.success) {
-          throw new Error(
-            response.message ||
-            "โหลดข้อมูลไม่สำเร็จ"
-          );
-        }
-
-        renderDashboard(response);
-        Swal.close();
-      } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "โหลดข้อมูลไม่สำเร็จ",
-          text:
-            error.message ||
-            "กรุณาตรวจสอบการเชื่อมต่อ",
-          confirmButtonText: "ตกลง"
-        });
-      }
+      Swal.fire({ title: "กำลังโหลดข้อมูล", text: "กรุณารอสักครู่", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try { const response = await callAPI({ action: "getDashboardData", password: state.teacherPassword }); if (!response.success) throw new Error(response.message || "โหลดข้อมูลไม่สำเร็จ"); renderDashboard(response); Swal.close(); } 
+      catch (error) { Swal.fire({ icon: "error", title: "โหลดข้อมูลไม่สำเร็จ", text: error.message || "กรุณาตรวจสอบการเชื่อมต่อ", confirmButtonText: "ตกลง" }); }
     }
 
     function renderDashboard(data) {
-      const attempts =
-        Array.isArray(data.attempts)
-          ? data.attempts
-          : [];
-
-      const summary =
-        data.summary || {};
-
-      DOM.dashAttempts.textContent =
-        String(
-          summary.totalAttempts ??
-          attempts.length
-        );
-
-      DOM.dashStudents.textContent =
-        String(
-          summary.totalStudents ?? 0
-        );
-
-      DOM.dashAverageScore.textContent =
-        String(
-          summary.averageScore ?? 0
-        );
-
-      DOM.dashAccuracy.textContent =
-        `${summary.averageAccuracy ?? 0}%`;
-
-      renderHistoryTable(attempts);
-
-      renderCategoryChart(
-        summary.categories || {}
-      );
-
-      renderScoreChart(attempts);
+      const attempts = Array.isArray(data.attempts) ? data.attempts : [], summary = data.summary || {};
+      DOM.dashAttempts.textContent = String(summary.totalAttempts ?? attempts.length); DOM.dashStudents.textContent = String(summary.totalStudents ?? 0);
+      DOM.dashAverageScore.textContent = String(summary.averageScore ?? 0); DOM.dashAccuracy.textContent = `${summary.averageAccuracy ?? 0}%`;
+      renderHistoryTable(attempts); renderCategoryChart(summary.categories || {}); renderScoreChart(attempts);
     }
 
     function renderHistoryTable(attempts) {
       DOM.historyTableBody.replaceChildren();
-
-      const latest = [...attempts]
-        .sort(
-          (a, b) =>
-            new Date(
-              b.date || 0
-            ).getTime() -
-            new Date(
-              a.date || 0
-            ).getTime()
-        )
-        .slice(0, 20);
-
-      if (!latest.length) {
-        const row =
-          document.createElement("tr");
-
-        const cell =
-          document.createElement("td");
-
-        cell.colSpan = 7;
-        cell.className =
-          "py-8 text-center text-slate-400";
-
-        cell.textContent =
-          "ยังไม่มีข้อมูลการเล่น";
-
-        row.appendChild(cell);
-
-        DOM.historyTableBody.appendChild(
-          row
-        );
-
-        return;
-      }
-
+      const latest = [...attempts].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()).slice(0, 20);
+      if (!latest.length) { const row = document.createElement("tr"); const cell = document.createElement("td"); cell.colSpan = 7; cell.className = "py-8 text-center text-slate-400"; cell.textContent = "ยังไม่มีข้อมูลการเล่น"; row.appendChild(cell); DOM.historyTableBody.appendChild(row); return; }
       latest.forEach((attempt) => {
-        const row =
-          document.createElement("tr");
-
-        const values = [
-          formatThaiDate(attempt.date),
-          `${attempt.firstName || ""} ` +
-            `${attempt.lastName || ""}`,
-          attempt.score ?? 0,
-          attempt.correct ?? 0,
-          attempt.wrong ?? 0,
-          `${attempt.accuracy ?? 0}%`,
-          attempt.deviceMode || "-"
-        ];
-
-        values.forEach((value) => {
-          const cell =
-            document.createElement("td");
-
-          cell.textContent =
-            String(value).trim();
-
-          row.appendChild(cell);
-        });
-
-        DOM.historyTableBody.appendChild(
-          row
-        );
+        const row = document.createElement("tr");
+        const values = [formatThaiDate(attempt.date), `${attempt.firstName || ""} ${attempt.lastName || ""}`, attempt.score ?? 0, attempt.correct ?? 0, attempt.wrong ?? 0, `${attempt.accuracy ?? 0}%`, attempt.deviceMode || "-"];
+        values.forEach((value) => { const cell = document.createElement("td"); cell.textContent = String(value).trim(); row.appendChild(cell); });
+        DOM.historyTableBody.appendChild(row);
       });
     }
 
-    function renderCategoryChart(
-      categories
-    ) {
-      if (state.categoryChart) {
-        state.categoryChart.destroy();
-      }
-
-      const labels =
-        Object.keys(categories);
-
-      const values = labels.map(
-        (label) =>
-          Number(
-            categories[label].accuracy || 0
-          )
-      );
-
-      state.categoryChart =
-        new Chart(DOM.categoryChart, {
-          type: "bar",
-
-          data: {
-            labels,
-
-            datasets: [
-              {
-                label: "ความแม่นยำ (%)",
-                data: values,
-                borderColor: "#22d3ee",
-                backgroundColor:
-                  "rgba(34,211,238,0.38)",
-                borderWidth: 1.5,
-                borderRadius: 8
-              }
-            ]
-          },
-
-          options: createChartOptions()
-        });
+    function renderCategoryChart(categories) {
+      if (state.categoryChart) state.categoryChart.destroy();
+      const labels = Object.keys(categories), values = labels.map((label) => Number(categories[label].accuracy || 0));
+      state.categoryChart = new Chart(DOM.categoryChart, { type: "bar", data: { labels, datasets: [{ label: "ความแม่นยำ (%)", data: values, borderColor: "#22d3ee", backgroundColor: "rgba(34,211,238,0.38)", borderWidth: 1.5, borderRadius: 8 }] }, options: createChartOptions() });
     }
 
     function renderScoreChart(attempts) {
-      if (state.scoreChart) {
-        state.scoreChart.destroy();
-      }
-
-      const latest = [...attempts]
-        .sort(
-          (a, b) =>
-            new Date(
-              a.date || 0
-            ).getTime() -
-            new Date(
-              b.date || 0
-            ).getTime()
-        )
-        .slice(-12);
-
-      state.scoreChart =
-        new Chart(DOM.scoreChart, {
-          type: "line",
-
-          data: {
-            labels: latest.map(
-              (item) =>
-                item.firstName ||
-                "ไม่ระบุ"
-            ),
-
-            datasets: [
-              {
-                label: "คะแนน",
-                data: latest.map(
-                  (item) =>
-                    Number(item.score || 0)
-                ),
-                borderColor: "#a855f7",
-                backgroundColor:
-                  "rgba(168,85,247,0.2)",
-                tension: 0.35,
-                pointBackgroundColor:
-                  "#22d3ee",
-                pointRadius: 4,
-                fill: true
-              }
-            ]
-          },
-
-          options: createChartOptions()
-        });
+      if (state.scoreChart) state.scoreChart.destroy();
+      const latest = [...attempts].sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime()).slice(-12);
+      state.scoreChart = new Chart(DOM.scoreChart, { type: "line", data: { labels: latest.map((item) => item.firstName || "ไม่ระบุ"), datasets: [{ label: "คะแนน", data: latest.map((item) => Number(item.score || 0)), borderColor: "#a855f7", backgroundColor: "rgba(168,85,247,0.2)", tension: 0.35, pointBackgroundColor: "#22d3ee", pointRadius: 4, fill: true }] }, options: createChartOptions() });
     }
 
-    function createChartOptions() {
-      return {
-        responsive: true,
-        maintainAspectRatio: false,
+    function createChartOptions() { return { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "#cbd5e1", font: { family: "Kanit" } } } }, scales: { x: { ticks: { color: "#94a3b8", font: { family: "Kanit" } }, grid: { color: "rgba(148,163,184,0.08)" } }, y: { beginAtZero: true, max: 100, ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.1)" } } } }; }
 
-        plugins: {
-          legend: {
-            labels: {
-              color: "#cbd5e1",
-              font: {
-                family: "Kanit"
-              }
-            }
-          }
-        },
-
-        scales: {
-          x: {
-            ticks: {
-              color: "#94a3b8",
-              font: {
-                family: "Kanit"
-              }
-            },
-
-            grid: {
-              color:
-                "rgba(148,163,184,0.08)"
-            }
-          },
-
-          y: {
-            beginAtZero: true,
-            max: 100,
-
-            ticks: {
-              color: "#94a3b8"
-            },
-
-            grid: {
-              color:
-                "rgba(148,163,184,0.1)"
-            }
-          }
-        }
-      };
-    }
-
-    /* =====================================================
-       THREE.JS
-    ===================================================== */
-
+    /* --- INITIALIZATION --- */
     function initializeSpaceBackground() {
-      if (!window.THREE) {
-        return;
-      }
-
-      const canvas =
-        document.getElementById(
-          "spaceCanvas"
-        );
-
-      const renderer =
-        new THREE.WebGLRenderer({
-          canvas,
-          alpha: true,
-          antialias: true
-        });
-
-      renderer.setPixelRatio(
-        Math.min(
-          window.devicePixelRatio || 1,
-          2
-        )
-      );
-
-      const scene = new THREE.Scene();
-
-      const camera =
-        new THREE.PerspectiveCamera(
-          60,
-          window.innerWidth /
-            window.innerHeight,
-          0.1,
-          1000
-        );
-
-      camera.position.z = 7;
-
-      const starCount = 1100;
-      const positions =
-        new Float32Array(
-          starCount * 3
-        );
-
-      for (
-        let index = 0;
-        index < starCount;
-        index++
-      ) {
-        positions[index * 3] =
-          (Math.random() - 0.5) * 24;
-
-        positions[index * 3 + 1] =
-          (Math.random() - 0.5) * 18;
-
-        positions[index * 3 + 2] =
-          (Math.random() - 0.5) * 18;
-      }
-
-      const starGeometry =
-        new THREE.BufferGeometry();
-
-      starGeometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(
-          positions,
-          3
-        )
-      );
-
-      const stars = new THREE.Points(
-        starGeometry,
-        new THREE.PointsMaterial({
-          color: 0x8be9fd,
-          size: 0.035,
-          transparent: true,
-          opacity: 0.82
-        })
-      );
-
-      scene.add(stars);
-
-      const energyCore =
-        new THREE.Mesh(
-          new THREE.TorusKnotGeometry(
-            1.4,
-            0.16,
-            150,
-            20
-          ),
-          new THREE.MeshBasicMaterial({
-            color: 0x22d3ee,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.2
-          })
-        );
-
-      energyCore.position.set(
-        0,
-        0,
-        -1.5
-      );
-
-      scene.add(energyCore);
-
-      const ring =
-        new THREE.Mesh(
-          new THREE.TorusGeometry(
-            2.4,
-            0.025,
-            10,
-            120
-          ),
-          new THREE.MeshBasicMaterial({
-            color: 0xa855f7,
-            transparent: true,
-            opacity: 0.28
-          })
-        );
-
-      ring.rotation.x = Math.PI / 2.8;
-      scene.add(ring);
-
-      function resize() {
-        renderer.setSize(
-          window.innerWidth,
-          window.innerHeight,
-          false
-        );
-
-        camera.aspect =
-          window.innerWidth /
-          window.innerHeight;
-
-        camera.updateProjectionMatrix();
-      }
-
-      window.addEventListener(
-        "resize",
-        resize
-      );
-
-      resize();
-
-      function animate() {
-        requestAnimationFrame(animate);
-
-        stars.rotation.y += 0.00045;
-        stars.rotation.x += 0.0001;
-
-        energyCore.rotation.x += 0.0022;
-        energyCore.rotation.y += 0.003;
-
-        ring.rotation.z -= 0.0015;
-
-        renderer.render(scene, camera);
-      }
-
+      if (!window.THREE) return;
+      const canvas = document.getElementById("spaceCanvas"), renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true }); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000); camera.position.z = 7;
+      const starCount = 1100, positions = new Float32Array(starCount * 3);
+      for (let i = 0; i < starCount; i++) { positions[i * 3] = (Math.random() - 0.5) * 24; positions[i * 3 + 1] = (Math.random() - 0.5) * 18; positions[i * 3 + 2] = (Math.random() - 0.5) * 18; }
+      const starGeometry = new THREE.BufferGeometry(); starGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0x8be9fd, size: 0.035, transparent: true, opacity: 0.82 })); scene.add(stars);
+      const energyCore = new THREE.Mesh(new THREE.TorusKnotGeometry(1.4, 0.16, 150, 20), new THREE.MeshBasicMaterial({ color: 0x22d3ee, wireframe: true, transparent: true, opacity: 0.2 })); energyCore.position.set(0, 0, -1.5); scene.add(energyCore);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.025, 10, 120), new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.28 })); ring.rotation.x = Math.PI / 2.8; scene.add(ring);
+      function resize() { renderer.setSize(window.innerWidth, window.innerHeight, false); camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); }
+      window.addEventListener("resize", resize); resize();
+      function animate() { requestAnimationFrame(animate); stars.rotation.y += 0.00045; stars.rotation.x += 0.0001; energyCore.rotation.x += 0.0022; energyCore.rotation.y += 0.003; ring.rotation.z -= 0.0015; renderer.render(scene, camera); }
       animate();
     }
-
-    /* =====================================================
-       INSTRUCTIONS
-    ===================================================== */
 
     function showInstructions() {
       Swal.fire({
         title: "วิธีเล่นด้วย AI Pose",
-
-        html: `
-          <div style="text-align:left;line-height:1.8">
-            <p><b>1.</b> อนุญาตให้เว็บไซต์ใช้กล้อง</p>
-            <p><b>2.</b> ถอยให้กล้องเห็นศีรษะ ไหล่ และสะโพก</p>
-            <p><b>3.</b> ยืนนิ่งขณะระบบปรับเทียบ</p>
-            <p><b>4.</b> เดินสลับซ้าย-กลาง-ขวา เพื่อเปลี่ยนโซนคำตอบ</p>
-            <p><b>5.</b> กระโดดหนึ่งครั้งเพื่อยืนยันคำตอบ (หน้าจอจะวาบสีม่วง)</p>
-            <p><b>6.</b> สามารถคลิกคำตอบแทนได้ตลอดเวลา</p>
-            <hr style="margin:14px 0;border-color:#334155">
-            <p style="color:#64748b">
-              ภาพจากกล้องประมวลผลภายในเบราว์เซอร์
-              และไม่ถูกส่งไปบันทึกใน Google Sheets
-            </p>
-          </div>
-        `,
-
+        html: `<div style="text-align:left;line-height:1.8"><p><b>1.</b> อนุญาตให้เว็บไซต์ใช้กล้อง</p><p><b>2.</b> ถอยให้กล้องเห็นช่วงไหล่ชัดเจน</p><p><b>3.</b> ยืนนิ่งขณะระบบปรับเทียบ</p><p><b>4.</b> เดินสลับซ้าย-กลาง-ขวา เพื่อเปลี่ยนโซนคำตอบ</p><p><b>5.</b> กระโดดหนึ่งครั้งเพื่อยืนยันคำตอบ (หน้าจอจะวาบสีม่วง)</p><p><b>6.</b> สามารถคลิกคำตอบแทนได้ตลอดเวลา</p></div>`,
         confirmButtonText: "เข้าใจแล้ว"
       });
     }
 
-    /* =====================================================
-       EVENTS
-    ===================================================== */
+    DOM.loginForm.addEventListener("submit", startMission); DOM.instructionsButton.addEventListener("click", showInstructions); DOM.teacherButton.addEventListener("click", teacherLogin);
+    DOM.toggleCameraButton.addEventListener("click", async () => { if (!state.cameraStarted) { await startPoseCamera(); return; } if (state.cameraVisible) hideCameraPanel(); else showCameraPanel(); });
+    DOM.closeCameraButton.addEventListener("click", hideCameraPanel); DOM.calibrateButton.addEventListener("click", startCalibration);
+    DOM.playAgainButton.addEventListener("click", () => { resetRound(); showScreen("game"); renderQuestion(); if (state.cameraStarted) showCameraPanel(); });
+    DOM.backHomeButton.addEventListener("click", () => { hideCameraPanel(); showScreen("login"); });
+    DOM.refreshDashboardButton.addEventListener("click", loadDashboard); DOM.dashboardLogoutButton.addEventListener("click", () => { state.teacherPassword = ""; showScreen("login"); });
+    window.addEventListener("beforeunload", clearQuestionTimer);
 
-    DOM.loginForm.addEventListener(
-      "submit",
-      startMission
-    );
-
-    DOM.instructionsButton.addEventListener(
-      "click",
-      showInstructions
-    );
-
-    DOM.teacherButton.addEventListener(
-      "click",
-      teacherLogin
-    );
-
-    DOM.toggleCameraButton.addEventListener(
-      "click",
-      async () => {
-        if (!state.cameraStarted) {
-          await startPoseCamera();
-          return;
-        }
-
-        if (state.cameraVisible) {
-          hideCameraPanel();
-        } else {
-          showCameraPanel();
-        }
-      }
-    );
-
-    DOM.closeCameraButton.addEventListener(
-      "click",
-      hideCameraPanel
-    );
-
-    DOM.calibrateButton.addEventListener(
-      "click",
-      startCalibration
-    );
-
-    DOM.playAgainButton.addEventListener(
-      "click",
-      () => {
-        resetRound();
-        showScreen("game");
-        renderQuestion();
-
-        if (state.cameraStarted) {
-          showCameraPanel();
-        }
-      }
-    );
-
-    DOM.backHomeButton.addEventListener(
-      "click",
-      () => {
-        hideCameraPanel();
-        showScreen("login");
-      }
-    );
-
-    DOM.refreshDashboardButton.addEventListener(
-      "click",
-      loadDashboard
-    );
-
-    DOM.dashboardLogoutButton.addEventListener(
-      "click",
-      () => {
-        state.teacherPassword = "";
-        showScreen("login");
-      }
-    );
-
-    window.addEventListener(
-      "beforeunload",
-      clearQuestionTimer
-    );
-
-    /* =====================================================
-       INITIALIZE
-    ===================================================== */
-
-    function initializeApplication() {
-      initializeSpaceBackground();
-      setupCameraDrag();
-      checkAPIStatus();
-    }
-
+    function initializeApplication() { initializeSpaceBackground(); setupCameraDrag(); checkAPIStatus(); }
     initializeApplication();
+
   </script>
 </body>
 </html>
+
 ```eof
